@@ -64,17 +64,17 @@ app.get("/product/pagination", async (req,res) => {
   try {
     let sql = 
       `
-        SELECT p.images, p.id, p.name, c.category, p.price, SUM(s.stock) AS total_stock FROM product AS p
+        SELECT p.images, p.id, p.name, c.category, p.price, total_stock FROM product AS p
         JOIN category c
         ON p.category_id = c.id
-        JOIN stock s
+        JOIN (SELECT product_id, SUM(stock) AS total_stock FROM stock
+        WHERE ready_to_sent = ?
+        GROUP BY product_id) AS s
         ON s.product_id = p.id
-        JOIN warehouse w
-        ON w.id = s.warehouse_id
         GROUP BY p.id
         ORDER BY p.id;
       `
-    const [result] = await conn.query(sql);
+    const [result] = await conn.query(sql, 0);
     console.log(result);
     conn.release();
     return res.status(200).send(result);
