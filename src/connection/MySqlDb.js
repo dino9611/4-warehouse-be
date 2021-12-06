@@ -5,7 +5,7 @@ const connection = mySql.createPool({
   connectionLimit: 10,
   user: process.env.MYSQL_USERNAME,
   password: process.env.MYSQL_PASSWORD,
-  database: proccess.env.MYSQL_DATABASE,
+  database: "test_warehouse",
 });
 
 connection.getConnection((err, conn) => {
