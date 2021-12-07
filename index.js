@@ -58,9 +58,12 @@ const {} = require("./src/routes");
 // app.use("/order");
 // app.use("/warehouse");
 
-app.get("/product/pagination", async (req,res) => {
-  console.log("Jalan /product/pagination");
+app.get("/admin/product/pagination", async (req,res) => {
+  console.log("Jalan /admin/product/pagination");
   const conn = await connection.promise().getConnection();
+  const { page, limit } = req.query; // Dari frontend
+  let offset = page * limit; // Semacam utk slice data, start data drimana
+
   try {
     let sql = 
       `
@@ -72,12 +75,20 @@ app.get("/product/pagination", async (req,res) => {
         GROUP BY product_id) AS s
         ON s.product_id = p.id
         GROUP BY p.id
-        ORDER BY p.id;
+        ORDER BY p.id
+        LIMIT ? OFFSET ?;
       `
-    const [result] = await conn.query(sql, 0);
-    // console.log(result);
+    const [productsResult] = await conn.query(sql, [
+      parseInt(limit),
+      parseInt(offset),
+    ]);
+
+    sql = `SELECT COUNT(id) AS products_total FROM product`;
+    let [productsTotal] = await conn.query(sql);
+    res.set("x-total-count", productsTotal[0].products_total);
+
     conn.release();
-    return res.status(200).send(result);
+    return res.status(200).send(productsResult);
   } catch (error) {
     conn.release();
     console.log(error);
