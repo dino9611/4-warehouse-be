@@ -63,7 +63,7 @@ app.get("/admin/product/pagination", async (req,res) => {
   const conn = await connection.promise().getConnection();
   const { page, limit } = req.query; // Dari frontend
   let offset = page * limit; // Semacam utk slice data, start data drimana
-
+  
   try {
     let sql = 
       `
