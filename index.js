@@ -71,7 +71,7 @@ app.get("/admin/product/pagination", async (req,res) => {
         JOIN category c
         ON p.category_id = c.id
         JOIN (SELECT product_id, SUM(stock) AS total_stock FROM stock
-        WHERE ready_to_sent = 0
+        WHERE ready_to_sent = ?
         GROUP BY product_id) AS s
         ON s.product_id = p.id
         GROUP BY p.id
@@ -79,6 +79,7 @@ app.get("/admin/product/pagination", async (req,res) => {
         LIMIT ? OFFSET ?;
       `
     const [productsResult] = await conn.query(sql, [
+      0,
       parseInt(limit),
       parseInt(offset),
     ]);
