@@ -44,18 +44,18 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
 // Import Routes
-const {adminRoute} = require("./src/routes");
+const {productRoute, adminRoute, warehouseRoute} = require("./src/routes");
 
 // Routing
 // app.use("/auth");
 // app.use("/user");
-// app.use("/product");
+app.use("/product", productRoute);
 // app.use("/checkout");
 // app.use("/payment");
 // app.use("/cart");
 app.use("/admin", adminRoute);
 // app.use("/sales");
 // app.use("/order");
-// app.use("/warehouse");
+app.use("/warehouse", warehouseRoute);
 
 app.listen(PORT, () => console.log(`API running ${PORT}`));
