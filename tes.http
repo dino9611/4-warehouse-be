@@ -1,0 +1,25 @@
+### Tes tambah produk
+POST http://localhost:3004/product/category HTTP/1.1
+Content-Type: application/json
+
+{
+    [
+        {
+            "images": "",
+            "prod_name": "Kacang Almond Jepara 250 Gram",
+            "prod_category": 8,
+            "prod_weight": 400,
+            "prod_price": 65000,
+            "prod_cost": 30000,
+            "prod_desc": "Kacang almond langka tapi enak."
+        },
+        {
+            "wh_id_01": 1,
+            "stock_01": 0,
+            "wh_id_02": 2,
+            "stock_02": 1,
+            "wh_id_03": 3,
+            "stock_03": 10
+        }
+    ]
+}

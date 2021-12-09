@@ -6,7 +6,7 @@ module.exports = {
         const conn = await connection.promise().getConnection();
 
         try {
-            let sql = `SELECT id, name FROM warehouse;`
+            let sql = `SELECT id, name FROM warehouse;`;
 
             const [warehouseResult] = await conn.query(sql);
 
