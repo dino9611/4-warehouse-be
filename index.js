@@ -6,6 +6,8 @@ const PORT = process.env.PORT || 5005;
 const cors = require("cors");
 const bearerToken = require("express-bearer-token");
 const morgan = require("morgan");
+const fs = require("fs");
+const path = require("path");
 const { connection } = require("./src/connection");
 
 // Import Routes
@@ -22,10 +24,10 @@ const accessLogStream = fs.createWriteStream(
 morgan.token("date", (req, res) => {
   return new Date();
 });
-app.use(
-  morgan("method :url :status :res[content-length] - :response-time ms :date"),
-  { stream: accessLogStream }
-);
+// app.use(
+//   morgan("method :url :status :res[content-length] - :response-time ms :date"),
+//   { stream: accessLogStream }
+// );
 app.use(express.json());
 app.use(
   cors({
@@ -42,15 +44,15 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
 // Routing
-app.use("/auth");
-app.use("/user");
-app.use("/product");
-app.use("/checkout");
-app.use("/payment");
-app.use("/cart");
-app.use("/admin");
-app.use("/sales");
-app.use("/order");
-app.use("/warehouse");
+// app.use("/auth");
+// app.use("/user");
+// app.use("/product");
+// app.use("/checkout");
+// app.use("/payment");
+// app.use("/cart");
+// app.use("/admin");
+// app.use("/sales");
+// app.use("/order");
+// app.use("/warehouse");
 
 app.listen(PORT, () => console.log(`API running ${PORT}`));
