@@ -34,7 +34,6 @@ module.exports = {
       } else if (sort == "pricedesc") {
         sortSql = ` order by price desc`;
       }
-      console.log(filterSql);
 
       let sql = `select p.id, name, price, weight, category_id, c.category, description, images from product p
       join category c
