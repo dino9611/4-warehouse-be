@@ -4,6 +4,14 @@ const { hashPass, createToken, transporter } = require("./../helpers");
 const { createTokenAccess, createTokenEmailVerified } = createToken;
 const path = require("path");
 const fs = require("fs");
+const strengthPass = (password) => {
+  //syarat:huruf kecil,huruf besar, angka, minimal 8 huruf,symbol
+  let strengthReq = new RegExp(
+    "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})"
+  );
+  let result = strengthReq.test(password);
+  return result;
+};
 
 module.exports = {
   register: async (req, res) => {
@@ -12,12 +20,48 @@ module.exports = {
 
     try {
       let sql = `select id from user where username = ?`;
-      const [dataUser] = await conn.query(sql, [username]);
-      if (dataUser.length) {
-        //cek username yang sama
-        throw { message: "username telah terdaftar" };
+      const [dataUser1] = await conn.query(sql, [username]);
+      sql = `select id from user where email= ? `;
+      const [dataUser2] = await conn.query(sql, [email]);
+      if (dataUser1.length || dataUser2.length) {
+        // cek username dan email yang sama
+        if (dataUser1.length && dataUser2.length) {
+          console.log("Email & Username telah terdaftar");
+          //throw bisa masuk di trycatch/.then
+          throw {
+            message: "Email & Username telah terdaftar",
+          };
+          //cek username yang sama
+        } else if (dataUser1.length) {
+          console.log("Username telah Terdaftar");
+          throw {
+            message: "Username telah Terdaftar",
+          };
+        } else {
+          //cek email yang sama
+          console.log("Email telah Terdaftar");
+          throw { message: "Email telah Terdaftar" };
+        }
       }
+      //proteksi strength password
+      if (!strengthPass(password)) {
+        console.log("Password tidak sesuai dengan ketentuan");
+        throw {
+          message:
+            "Password harus memiliki : Huruf Kecil, Huruf Besar, Angka, Minimal 8 karakter, dan Simbol",
+        };
+      }
+
+      // const strength = regex.test(password);
+      // console.log(strength);
+      // if (password.length <= 8) {
+      //   console.log("password lemah");
+      //   return res.send({ message: "password lemah" });
+      // } else if (password) {
+      // }
+
       console.log(username, "username belum terdaftar");
+      //insert data to database
       sql = `insert into user set ?`;
       let dataInsert = {
         username,
@@ -62,18 +106,18 @@ module.exports = {
     }
   },
   login: async (req, res) => {
-    const { username, password, email } = req.body;
+    const { username, password } = req.body;
     const conn = await connection.promise().getConnection();
 
     try {
-      let sql = `select id,username,email,is_verified,role_id from user where username = ? or email = ? and password = ?`;
+      let sql = `select id,username,email,is_verified,role_id from user where (username = ? or email = ?) and password = ?`;
       const [userData] = await conn.query(sql, [
         username,
-        email,
+        username,
         hashPass(password),
       ]);
       if (!userData.length) {
-        throw { message: "username tidak ditemukan" };
+        throw { message: "Username/Email Not Found" };
       }
       const dataToken = {
         id: userData[0].id,
