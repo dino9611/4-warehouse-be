@@ -44,9 +44,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
 // Routing
+const { profileRoute } = require("./src/routes");
+
 // app.use("/auth");
 // app.use("/user");
 // app.use("/product");
+app.use("/profile", profileRoute);
 // app.use("/checkout");
 // app.use("/payment");
 // app.use("/cart");
