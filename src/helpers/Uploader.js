@@ -2,20 +2,16 @@ const multer = require("multer");
 const fs = require("fs");
 
 const uploader = (destination, filenamePrefix) => {
-    let defaultPath = "./public/assets/images";
+    let defaultPath = "./public/assets/images/uploaded/";
 
     const storage = multer.diskStorage({
         destination: (req, file, cb) => {
-            console.log("Multer line 8: ",file);
             const directory = defaultPath + destination;
-            console.log("Directory line 11: ", directory);
             if (fs.existsSync(directory)) {
-                console.log("Directory exist line 13: ", directory)
                 cb(null, directory)
             } else {
                 fs.mkdir(directory, {recursive: true}, (error) => cb(error, directory))
-                console.log("Directory make line 17: ", directory)
-            }
+            };
         },
         filename: (req, file, cb) => {
             const getTime = new Date();
