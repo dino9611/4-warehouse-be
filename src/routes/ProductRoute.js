@@ -23,7 +23,7 @@ const checkCategoryFolder = async (req, res, next) => { // Utk menentukan route 
         console.log(error);
         return res.status(500).send({ message: error.message || "Server error" });
     } finally {
-        next()
+        next();
     };
 };
 
