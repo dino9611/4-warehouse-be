@@ -59,21 +59,19 @@ module.exports = {
                     product_cost: prod_cost,
                     description: prod_desc
                 }
-                const [addResult] = await conn.query(sql, addDataProd)
-                console.log(addResult);
+                const [addResult] = await conn.query(sql, addDataProd);
                 const newProdId = addResult.insertId;
     
                 // Utk looping insert stock, jadi semua warehouse punya record produk yg sama walaupun stok kosong
-                sql = `INSERT INTO stock SET ?`
-                dataStock.forEach((val, index) => {
+                sql = `INSERT INTO stock SET ?`;
+                for (let i = 0; i < dataStock.length; i++) {
                     let addStock = {
-                        warehouse_id: val.id,
+                        warehouse_id: dataStock[i].id,
                         product_id: newProdId,
-                        stock: val.stock
+                        stock: dataStock[i].stock
                     }
-                    const [addStockResult] = await conn.query(sql, addStock);
-                    console.log(`Query ${index + 1}`, addStockResult);
-                })
+                    await conn.query(sql, addStock);
+                }
     
                 await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
                 conn.release();
