@@ -1,4 +1,4 @@
-const connection = require("./MysqlDb");
+const connection = require("./MySqlDb");
 
 module.exports = {
   connection,

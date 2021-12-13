@@ -4,14 +4,29 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Email Verifikasi</title>
   </head>
   <body>
     <center>
-      <h1>{{tes}}</h1>
-      <a href="http://localhost:3000/auth/accept?token={{token}}"
-        >Verifikasi email</a
-      >
+      <h1>You're almost there!</h1>
+      <h4>Hi, {{name}}</h4>
+      <h4 href="http://localhost:2004/verify/{{token}}">
+        Finish setting your account by verifying through the link below
+      </h4>
+      <h4 style="margin-top: 16px">
+        <a
+          href="http://localhost:2004/verify/{{token}}"
+          style="
+            background-color: lightgray;
+            border-radius: 4px;
+            color: black;
+            padding: 12px;
+            text-decoration: none;
+          "
+        >
+          Verify yourself
+        </a>
+      </h4>
     </center>
   </body>
 </html>

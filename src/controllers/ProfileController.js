@@ -104,7 +104,10 @@ module.exports = {
 
       res.set("x-token-email", token);
 
-      let filepath = path.resolve(__dirname, "./../template/VerifyEmail.html");
+      let filepath = path.resolve(
+        __dirname,
+        "./../template/VerifyChangeEmail.html"
+      );
 
       let htmlString = fs.readFileSync(filepath, "utf-8");
       const template = handleBars.compile(htmlString);

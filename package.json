@@ -24,6 +24,7 @@
     "mysql2": "^2.3.0",
     "node-cache": "^5.1.2",
     "nodemailer": "^6.7.0",
+    "nodemon": "^2.0.15",
     "npm": "^8.0.0",
     "winston": "^3.3.3"
   }
