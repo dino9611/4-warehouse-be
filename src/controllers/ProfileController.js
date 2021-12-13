@@ -30,7 +30,7 @@ module.exports = {
     const connDb = connection.promise();
 
     try {
-      let sql = `select first_name, last_name, email, gender, date_of_birth from user where id = ?`;
+      let sql = `select first_name, image, last_name, email, gender, date_of_birth from user where id = ?`;
       let [personalData] = await connDb.query(sql, [req.params.userId]);
 
       return res.status(200).send(personalData);
