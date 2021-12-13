@@ -1,5 +1,9 @@
-const productRoute = require("./ProductRoute");
+const profileRoute = require("./ProfileRoute");
 
 module.exports = {
-  productRoute,
+  profileRoute,
+  AuthRoutes: require("./AuthRoutes"),
+  productRoute: require("./ProductRoute"),
+  adminRoute: require("./AdminRoute"),
+  warehouseRoute: require("./WarehouseRoute"),
 };
