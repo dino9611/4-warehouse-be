@@ -1,7 +1,7 @@
 const { connection } = require("../connection");
 
 module.exports = {
-  getProduct: async (req, res) => {
+  listProduct: async (req, res) => {
     const connDb = await connection.promise().getConnection();
     const { name, pricemin, pricemax, category, sort, page, limit } = req.query;
     const offset = parseInt(page) * parseInt(limit);
