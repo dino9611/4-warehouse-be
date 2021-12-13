@@ -43,13 +43,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
 // Import Routes
-const { AuthRoutes, adminRoute } = require("./src/routes");
-const { profileRoute } = require("./src/routes");
 const {
   AuthRoutes,
   productRoute,
   adminRoute,
   warehouseRoute,
+  profileRoute,
 } = require("./src/routes");
 
 // Routing
