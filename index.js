@@ -4,13 +4,6 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 5005;
 const cors = require("cors");
-<<<<<<< HEAD
-const bearerToken = require("express-bearer-token");
-const morgan = require("morgan");
-const fs = require("fs");
-const path = require("path");
-=======
->>>>>>> develop
 const { connection } = require("./src/connection");
 const morgan = require("morgan");
 const path = require("path");
@@ -29,13 +22,10 @@ const accessLogStream = fs.createWriteStream(
   }
 );
 
-<<<<<<< HEAD
 // Middleware global start
 morgan.token("date", (req, res) => {
   return new Date();
 });
-=======
->>>>>>> develop
 // app.use(
 //   morgan("method :url :status :res[content-length] - :response-time ms :date"),
 //   { stream: accessLogStream }
