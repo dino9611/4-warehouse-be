@@ -30,7 +30,7 @@ module.exports = {
     const connDb = connection.promise();
 
     try {
-      let sql = `select first_name, image, last_name, email, gender, date_of_birth from user where id = ?`;
+      let sql = `select username, first_name, profile_picture, last_name, email, gender, date_of_birth from user where id = ?`;
       let [personalData] = await connDb.query(sql, [req.params.userId]);
 
       return res.status(200).send(personalData);
@@ -62,10 +62,10 @@ module.exports = {
       }
 
       let sql = `select id from user where password = ? and role_id = 3`;
-      let [cekPass] = await connDb.query(sql, [req.body.currentPass]);
-
+      let [cekPass] = await connDb.query(sql, [hashPass(req.body.currentPass)]);
+      console.log(cekPass);
       if (!cekPass.length) {
-        throw { message: "Password lama yang anda masukkan salah" };
+        return res.send(cekPass);
       }
 
       sql = `update user set password = ? where id = ? and role_id = 3`;
@@ -73,7 +73,7 @@ module.exports = {
 
       connDb.release();
 
-      return res.status(200).send({ message: "Password berhasil diubah" });
+      return res.status(200).send(cekPass);
     } catch (error) {
       connDb.release();
       return res.status(500).send({ message: error.message });
