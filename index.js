@@ -22,6 +22,10 @@ const accessLogStream = fs.createWriteStream(
   }
 );
 
+// Middleware global start
+morgan.token("date", (req, res) => {
+  return new Date();
+});
 // app.use(
 //   morgan("method :url :status :res[content-length] - :response-time ms :date"),
 //   { stream: accessLogStream }
