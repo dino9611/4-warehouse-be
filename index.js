@@ -4,12 +4,16 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 5005;
 const cors = require("cors");
-const bearerToken = require("express-bearer-token");
-const morgan = require("morgan");
 const { connection } = require("./src/connection");
+const morgan = require("morgan");
+const path = require("path");
+const fs = require("fs");
+const bearerToken = require("express-bearer-token");
 
-// Import Routes
-const {} = require("./src/routes");
+// Middleware global start
+morgan.token("date", (req, res) => {
+  return new Date();
+});
 
 const accessLogStream = fs.createWriteStream(
   path.join(__dirname, "access.log"),
@@ -18,14 +22,10 @@ const accessLogStream = fs.createWriteStream(
   }
 );
 
-// Middleware global start
-morgan.token("date", (req, res) => {
-  return new Date();
-});
-app.use(
-  morgan("method :url :status :res[content-length] - :response-time ms :date"),
-  { stream: accessLogStream }
-);
+// app.use(
+//   morgan("method :url :status :res[content-length] - :response-time ms :date"),
+//   { stream: accessLogStream }
+// );
 app.use(express.json());
 app.use(
   cors({
@@ -34,6 +34,7 @@ app.use(
       "x-token-access",
       "x-token-refresh",
       "x-total-count",
+      "x-token-email",
     ], // To put token in headers
   })
 );
@@ -41,16 +42,22 @@ app.use(bearerToken());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
+// Import Routes
+const {
+  AuthRoutes,
+  productRoute,
+  adminRoute,
+  warehouseRoute,
+  profileRoute,
+} = require("./src/routes");
+
 // Routing
-app.use("/auth");
-app.use("/user");
-app.use("/product");
-app.use("/checkout");
-app.use("/payment");
-app.use("/cart");
-app.use("/admin");
-app.use("/sales");
-app.use("/order");
-app.use("/warehouse");
+app.use("/auth", AuthRoutes);
+app.use("/admin", adminRoute);
+app.use("/profile", profileRoute);
+app.use("/auth", AuthRoutes);
+app.use("/product", productRoute);
+app.use("/admin", adminRoute);
+app.use("/warehouse", warehouseRoute);
 
 app.listen(PORT, () => console.log(`API running ${PORT}`));
