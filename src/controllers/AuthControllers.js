@@ -155,12 +155,11 @@ module.exports = {
   adminLogin: async (req, res) => {
       const { inputtedUsername, inputtedPassword } = req.body;
       const conn = await connection.promise().getConnection();
-      console.log(req.body)
 
       try {
         let sql = `
               SELECT id, username, email, is_verified, role_id FROM user 
-              WHERE username = ? and password = ?
+              WHERE username = ? and password = ?;
             `;
         const [userData] = await conn.query(sql, [
             inputtedUsername,
@@ -171,7 +170,9 @@ module.exports = {
         console.log(userData);
         
         if (!userData.length) {
-            throw { message: "Username/Password incorrect" };
+          conn.release();
+          return res.send({message: "Incorrect Username/Password!"}) // * Klo kyk gini bisa dapet di try
+          // throw { message: "Username/Password incorrect" }; // * Klo yg ini harus di catch
         }
         const dataToken = {
           id: userData[0].id,
@@ -181,7 +182,7 @@ module.exports = {
   
         const accessToken = createTokenAccess(dataToken);
         res.set("x-token-access", accessToken);
-        console.log("Token: ", accessToken)
+        conn.release();
         return res.status(200).send({ ...userData[0] });
       } catch (error) {
         conn.release();
