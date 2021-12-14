@@ -152,4 +152,41 @@ module.exports = {
       return res.status(500).send({ message: error.message || "server eror" });
     }
   },
+  adminLogin: async (req, res) => {
+      const { inputtedUsername, inputtedPassword } = req.body;
+      const conn = await connection.promise().getConnection();
+      console.log(req.body)
+
+      try {
+        let sql = `
+              SELECT id, username, email, is_verified, role_id FROM user 
+              WHERE username = ? and password = ?
+            `;
+        const [userData] = await conn.query(sql, [
+            inputtedUsername,
+            inputtedPassword
+            // hashPass(inputtedPassword), 
+            // * Sesi testing saat ini blm byk dummy data pake hashpass pass nya, jd comment dlu, klo nyala nnti pass dianggap salah
+        ]);
+        console.log(userData);
+        
+        if (!userData.length) {
+            throw { message: "Username/Password incorrect" };
+        }
+        const dataToken = {
+          id: userData[0].id,
+          username: userData[0].username,
+          role_id: userData[0].role_id,
+        };
+  
+        const accessToken = createTokenAccess(dataToken);
+        res.set("x-token-access", accessToken);
+        console.log("Token: ", accessToken)
+        return res.status(200).send({ ...userData[0] });
+      } catch (error) {
+        conn.release();
+        console.log(error);
+        return res.status(500).send({ message: error.message || "Server Error" });
+      }
+  }
 };
