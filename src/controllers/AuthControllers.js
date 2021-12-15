@@ -163,9 +163,9 @@ module.exports = {
             `;
         const [userData] = await conn.query(sql, [
             inputtedUsername,
-            inputtedPassword
-            // hashPass(inputtedPassword), 
-            // * Sesi testing saat ini blm byk dummy data pake hashpass pass nya, jd comment dlu, klo nyala nnti pass dianggap salah
+            inputtedPassword 
+            // ! Khusus sesi testing gunakan tanpa hash karena blm byk dummy data password nya pake hashpass, dapat menyebabkan salah matching password dgn db
+            // hashPass(inputtedPassword) 
         ]);
         console.log(userData);
         
