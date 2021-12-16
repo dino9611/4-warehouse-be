@@ -44,13 +44,6 @@ router.delete("/delete/:prodId", verifyPass, deleteProduct);
 module.exports = router;
 
 // ? Notes discuss w/ Dino
-// router.get("/", verifiedPass, deleteProd);
-// Struktur req.body
-// req.headers["adminPass"]
-// axios
-// admin banyak CRUD, jd reusable codingan nya
-// Coba console.log(req.headers)
-
 // Ganti image
 // Ada 1 array tambahan isi nya kosong --> gimana cara tau yg diubah apa?
 // Nyimpen data nya array of object, karena JSON ga bisa satu2 diubah nya, lsg sekaligus diubah semua

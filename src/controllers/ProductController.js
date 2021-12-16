@@ -150,7 +150,6 @@ module.exports = {
       console.log("Jalan /product/delete/:prodId");
       const prodId = req.params.prodId;
       const conn = await connection.promise().getConnection();
-      console.log(req.params)
 
       try {
         await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
@@ -167,7 +166,7 @@ module.exports = {
 
           await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
           conn.release();
-          return res.status(200).send({message: "Delete Success"});
+          return res.status(200).send({message: "Delete Success (list will refresh)"});
         }
       } catch (error) {
         await conn.rollback(); // Rollback data klo terjadi error/gagal
