@@ -171,7 +171,7 @@ module.exports = {
         
         if (!userData.length) {
           conn.release();
-          return res.send({message: "Incorrect Username/Password!"}) // * Klo kyk gini bisa dapet di try
+          return res.send({message: "Incorrect Username/Password!"}); // * Klo kyk gini bisa dapet di try
           // throw { message: "Username/Password incorrect" }; // * Klo yg ini harus di catch
         }
         const dataToken = {

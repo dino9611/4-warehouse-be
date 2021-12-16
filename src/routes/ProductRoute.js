@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const uploader = require("../helpers/Uploader");
+const {uploader, verifyPass} = require("../helpers/");
 const { connection } = require("../connection");
 const { productController } = require("./../controllers");
-const { getProdCategory, addProduct, listProduct } = productController;
+const { getProdCategory, addProduct, listProduct, deleteProduct } = productController;
 
 let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product image
 
@@ -39,5 +39,26 @@ router.get("/category", getProdCategory);
 router.post("/determine-category", checkCategoryFolder);
 router.post("/add", uploadFile, addProduct(categoryFolder));
 router.get("/", listProduct);
+router.delete("/delete/:prodId", verifyPass, deleteProduct);
 
 module.exports = router;
+
+// ? Notes discuss w/ Dino
+// router.get("/", verifiedPass, deleteProd);
+// Struktur req.body
+// req.headers["adminPass"]
+// axios
+// admin banyak CRUD, jd reusable codingan nya
+// Coba console.log(req.headers)
+
+// Ganti image
+// Ada 1 array tambahan isi nya kosong --> gimana cara tau yg diubah apa?
+// Nyimpen data nya array of object, karena JSON ga bisa satu2 diubah nya, lsg sekaligus diubah semua
+// Misal mau rubah yg kedua
+// Pisah controller, ngubah foto lsg upload, kyk profile picture, klik lsg ganti
+// Parameter di body, index keberapa, lsg diganti 
+// Ada tombol delete utk foto 2 & 3
+// Edit stok kepisah sendiri menu nya
+
+// Edit stock
+// Masuk menjadi row record baru

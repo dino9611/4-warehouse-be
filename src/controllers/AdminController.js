@@ -16,14 +16,16 @@ module.exports = {
             WHERE ready_to_sent = ?
             GROUP BY product_id) AS s
             ON s.product_id = p.id
+            WHERE is_delete = ?
             GROUP BY p.id
             ORDER BY p.id
             LIMIT ? OFFSET ?;
         `;
       const [productsResult] = await conn.query(sql, [
         0,
+        0,
         parseInt(limit),
-        parseInt(offset),
+        parseInt(offset)
       ]);
 
       sql = `SELECT COUNT(id) AS products_total FROM product`;
