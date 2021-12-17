@@ -167,7 +167,6 @@ module.exports = {
             // ! Khusus sesi testing gunakan tanpa hash karena blm byk dummy data password nya pake hashpass, dapat menyebabkan salah matching password dgn db
             // hashPass(inputtedPassword) 
         ]);
-        console.log(userData);
         
         if (!userData.length) {
           conn.release();

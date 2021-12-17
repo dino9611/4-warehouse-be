@@ -3,10 +3,6 @@ const hashPass = require("./index");
 
 const verifyPass = async (req, res, next) => {
     const {username, pass} = req.headers;
-
-    // console.log(req.params.prodId);
-    // console.log(username);
-    // console.log(pass);
     
     const conn = await connection.promise().getConnection();
 
