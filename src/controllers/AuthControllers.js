@@ -167,11 +167,10 @@ module.exports = {
             // ! Khusus sesi testing gunakan tanpa hash karena blm byk dummy data password nya pake hashpass, dapat menyebabkan salah matching password dgn db
             // hashPass(inputtedPassword) 
         ]);
-        console.log(userData);
         
         if (!userData.length) {
           conn.release();
-          return res.send({message: "Incorrect Username/Password!"}) // * Klo kyk gini bisa dapet di try
+          return res.send({message: "Incorrect Username/Password!"}); // * Klo kyk gini bisa dapet di try
           // throw { message: "Username/Password incorrect" }; // * Klo yg ini harus di catch
         }
         const dataToken = {

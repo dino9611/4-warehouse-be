@@ -146,4 +146,33 @@ module.exports = {
       console.log(error);
     }
   },
+  deleteProduct: async (req, res) => {
+      console.log("Jalan /product/delete/:prodId");
+      const prodId = req.params.prodId;
+      const conn = await connection.promise().getConnection();
+
+      try {
+        await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+        
+        let sql = `SELECT id FROM product where id = ?;`;
+        const [result] = await conn.query(sql, [prodId])
+
+        if (!result.length) {
+          conn.release();
+          return res.send({failMessage: "Product ID not found, please contact Super Admin"});
+        } else {
+          sql = `UPDATE product SET is_delete = ? WHERE id = ?;`;
+          await conn.query(sql, [1, prodId]);
+
+          await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+          conn.release();
+          return res.status(200).send({message: "Delete Success (list will refresh)"});
+        }
+      } catch (error) {
+        await conn.rollback(); // Rollback data klo terjadi error/gagal
+        conn.release();
+        console.log(error);
+        return res.status(500).send({ message: error.message || "Server error" });
+      }
+  }
 };
