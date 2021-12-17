@@ -86,6 +86,11 @@ module.exports = {
       }
     };
   },
+  editProduct: async (req, res) => {
+    console.log(req.query)
+
+
+  },
 
   // LIST PRODUK USER PAGE (GANGSAR)
 

@@ -38,6 +38,7 @@ const uploadFile = uploader(categoryFolder, "Product_").fields([
 router.get("/category", getProdCategory);
 router.post("/determine-category", checkCategoryFolder);
 router.post("/add", uploadFile, addProduct(categoryFolder));
+router.patch("/edit/:prodId", () => console.log("masuk route edit"));
 router.get("/", listProduct);
 router.delete("/delete/:prodId", verifyPass, deleteProduct);
 
