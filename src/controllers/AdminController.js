@@ -71,30 +71,31 @@ module.exports = {
     console.log(req.body)
     const conn = await connection.promise().getConnection();
 
-    // // Destructure data input produk dari FE, utk insert ke MySql
-    // const {
-    //   warehouse_name,
-    //   warehouse_address
-    // } = req.body;
+    // Destructure data input produk dari FE, utk insert ke MySql
+    const {
+      new_username,
+      new_password,
+      assign_warehouse
+    } = req.body;
 
-    // try {
-    //   await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
 
-    //   let sql = `INSERT INTO warehouse SET ?`;
-    //   let addDataWh = {
-    //     name: warehouse_name,
-    //     address: warehouse_address
-    //   };
-    //   const [addResult] = await conn.query(sql, addDataWh);
+      let sql = `INSERT INTO user SET ?`;
+      let addDataWh = {
+        name: warehouse_name,
+        address: warehouse_address
+      };
+      const [addResult] = await conn.query(sql, addDataWh);
 
-    //   await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
-    //   conn.release();
-    //   return res.status(200).send({ message: "Berhasil tambah warehouse" });
-    // } catch (error) {
-    //   await conn.rollback(); // Rollback data klo terjadi error/gagal
-    //   conn.release();
-    //   console.log(error);
-    //   return res.status(500).send({ message: error.message || "Server error" });
-    // };
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      return res.status(200).send({ message: "Berhasil tambah warehouse" });
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    };
 }
 };
