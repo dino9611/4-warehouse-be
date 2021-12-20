@@ -3,7 +3,7 @@ const router = express.Router();
 const {uploader, verifyPass} = require("../helpers/");
 const { connection } = require("../connection");
 const { productController } = require("./../controllers");
-const { getProdCategory, addProduct, editProdNoImg, listProduct, deleteProduct } = productController;
+const { getProdCategory, addProduct, editProdNoImg, editProdImg, listProduct, deleteProduct } = productController;
 
 let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product image
 
@@ -39,12 +39,14 @@ const uploadFile = uploader(categoryFolder, "Product_").fields([
 const checkEditCatFolder = async (req, res, next) => {
   // Utk menentukan route folder uploaded product image by category
   const conn = await connection.promise().getConnection();
-  const { prod_category } = req.headers;
+  console.log("Line 42: ", req.headers.image_to_del);
+  console.log("Line 43: ", parseInt(req.headers.img_del_index));
+  const { category_id } = req.headers;
   console.log("Masuk check edit cat folder");
   try {
     let sql = `SELECT category FROM category WHERE id = ?;`;
 
-    const categoryResult = await conn.query(sql, prod_category);
+    const categoryResult = await conn.query(sql, category_id);
 
     conn.release();
     req.categoryFolder = categoryResult[0][0].category
@@ -87,10 +89,7 @@ router.post("/add", uploadFile, addProduct(categoryFolder));
 
 router.patch("/edit/:id", editProdNoImg);
 
-router.patch("/edit/testimg/:prodId", checkEditCatFolder, uploadFileEdit, (req, res) => {
-  console.log(req.categoryFolder);
-  res.send("success")
-});
+router.patch("/edit/image/:id", checkEditCatFolder, uploadFileEdit, editProdImg);
 
 router.get("/", listProduct);
 router.delete("/delete/:prodId", verifyPass, deleteProduct);
