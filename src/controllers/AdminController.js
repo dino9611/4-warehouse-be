@@ -39,5 +39,62 @@ module.exports = {
       console.log(error);
       return res.status(500).send({ message: error.message || "Server error" });
     };
-  }
+  },
+  getAdminList: async (req, res) => {
+    console.log("Jalan /admin/list");
+    const conn = await connection.promise().getConnection();
+
+    try {
+        let sql = `
+              SELECT u.id, u.username, u.role_id, r.role, wa.warehouse_id, w.name AS warehouse_name FROM user AS u
+              JOIN role r
+              ON u.role_id = r.id
+              JOIN warehouse_admin wa
+              ON u.id = wa.user_id
+              JOIN warehouse w
+              ON wa.warehouse_id = w.id
+              WHERE u.role_id = ?;
+          `;
+
+        const [adminListResult] = await conn.query(sql, 2);
+
+        conn.release();
+        return res.status(200).send(adminListResult);
+    } catch (error) {
+        conn.release();
+        console.log(error);
+        return res.status(500).send({ message: error.message || "Server error" });
+    };
+  },
+  addAdmin: async (req, res) => {
+    console.log("Jalan /admin/add");
+    console.log(req.body)
+    const conn = await connection.promise().getConnection();
+
+    // // Destructure data input produk dari FE, utk insert ke MySql
+    // const {
+    //   warehouse_name,
+    //   warehouse_address
+    // } = req.body;
+
+    // try {
+    //   await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+
+    //   let sql = `INSERT INTO warehouse SET ?`;
+    //   let addDataWh = {
+    //     name: warehouse_name,
+    //     address: warehouse_address
+    //   };
+    //   const [addResult] = await conn.query(sql, addDataWh);
+
+    //   await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+    //   conn.release();
+    //   return res.status(200).send({ message: "Berhasil tambah warehouse" });
+    // } catch (error) {
+    //   await conn.rollback(); // Rollback data klo terjadi error/gagal
+    //   conn.release();
+    //   console.log(error);
+    //   return res.status(500).send({ message: error.message || "Server error" });
+    // };
+}
 };

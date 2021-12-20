@@ -35,10 +35,61 @@ const uploadFile = uploader(categoryFolder, "Product_").fields([
   { name: "images", maxCount: 3 }, // Key harus sama dengan yg dikirimkan dari body (FE)
 ]);
 
+// ! Testing
+const checkEditCatFolder = async (req, res, next) => {
+  // Utk menentukan route folder uploaded product image by category
+  const conn = await connection.promise().getConnection();
+  const { prod_category } = req.headers;
+  console.log("Masuk check edit cat folder");
+  try {
+    let sql = `SELECT category FROM category WHERE id = ?;`;
+
+    const categoryResult = await conn.query(sql, prod_category);
+
+    conn.release();
+    req.categoryFolder = categoryResult[0][0].category
+    .toLowerCase()
+    .replace(/-/g, "_"); // lowercase all & regex rubah "-" jd "_"
+    next();
+  } catch (error) {
+    conn.release();
+    console.log(error);
+    return res.status(500).send({ message: error.message || "Server error" });
+  }
+};
+
+const uploadFileEdit = (req, res, next) => {
+  console.log("Masuk upload file edit");
+  console.log("line 63: ", req.categoryFolder);
+  let upload = uploader(req.categoryFolder, "Product_").fields([
+    // Gunakan fields bila ingin > 1 upload file, klo 1 pake .single
+    { name: "images", maxCount: 3 }, // Key harus sama dengan yg dikirimkan dari body (FE)
+  ]);
+  upload(req, res, (error) => {
+    if (error) {
+      console.log("Masuk error line 70: ", error)
+    } else {
+      next();
+    }
+  })
+};
+
+// ? uploader(categoryFolder, "Product_").fields([
+//   // Gunakan fields bila ingin > 1 upload file, klo 1 pake .single
+//   { name: "images", maxCount: 3 }, // Key harus sama dengan yg dikirimkan dari body (FE)
+// ]);
+
+// ! End of testing
+
 router.get("/category", getProdCategory);
 router.post("/determine-category", checkCategoryFolder);
 router.post("/add", uploadFile, addProduct(categoryFolder));
-router.patch("/edit/:prodId", () => console.log("masuk route edit"));
+
+router.patch("/edit/:prodId", checkEditCatFolder, uploadFileEdit, (req, res) => {
+  console.log(req.categoryFolder);
+  res.send("success")
+});
+
 router.get("/", listProduct);
 router.delete("/delete/:prodId", verifyPass, deleteProduct);
 
@@ -56,3 +107,13 @@ module.exports = router;
 
 // Edit stock
 // Masuk menjadi row record baru
+
+// Misal edit foto, utk foto 2/3 pilih edit/delete
+// Pisahin endpoint khusus edit foto
+// Cara ngeditnya --> tergantung tampilan, cara tergampang, kasih modal buat foto baru (klik)
+// Klo ga mau pake modal, delete dlu di database, 
+// Klo edit paling gampang pake modal kecil buat naro foto baru nya
+// Nyari index bisa dari nama fotonya
+// Dari frontend kasih looping 
+//  Klo delete yg tengah2, bisa jg nnti geser fotonya
+// Cara delete image, pake unlink fs, kemudian public/bla bla bla
