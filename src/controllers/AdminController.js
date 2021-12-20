@@ -1,4 +1,5 @@
 const { connection } = require("../connection");
+const { hashPass } = require("./../helpers");
 
 module.exports = {
   getAdminProducts: async (req, res) => {
@@ -68,7 +69,6 @@ module.exports = {
   },
   addAdmin: async (req, res) => {
     console.log("Jalan /admin/add");
-    console.log(req.body)
     const conn = await connection.promise().getConnection();
 
     // Destructure data input produk dari FE, utk insert ke MySql
@@ -82,11 +82,21 @@ module.exports = {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
 
       let sql = `INSERT INTO user SET ?`;
-      let addDataWh = {
-        name: warehouse_name,
-        address: warehouse_address
+      let addNewAdmin = {
+        username: new_username,
+        password: hashPass(new_password),
+        role_id: 2,
+        is_verified: 1
       };
-      const [addResult] = await conn.query(sql, addDataWh);
+      const [addAdminResult] = await conn.query(sql, addNewAdmin);
+      const newAdminId = addAdminResult.insertId;
+
+      sql = `INSERT INTO warehouse_admin SET ?`;
+      let assignAdminWh = {
+        user_id: newAdminId,
+        warehouse_id: assign_warehouse
+      };
+      await conn.query(sql, assignAdminWh);
 
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
