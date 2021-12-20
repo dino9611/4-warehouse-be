@@ -3,11 +3,11 @@ const fs = require("fs");
 
 const uploader = (destination, filenamePrefix) => {
   let defaultPath = "./public/assets/images/uploaded/";
-  console.log("default path line 6: ", defaultPath);
+  // console.log("default path line 6: ", defaultPath);
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       const directory = defaultPath + destination;
-      console.log("Masuk directory line 10: ", directory);
+      // console.log("Masuk directory line 10: ", directory);
       if (fs.existsSync(directory)) {
         cb(null, directory);
       } else {
@@ -47,7 +47,7 @@ const uploader = (destination, filenamePrefix) => {
       cb(null, true);
     }
   };
-  console.log("Masuk sblm return line 49 uploader");
+  // console.log("Masuk sblm return line 49 uploader");
   return multer({
     storage: storage,
     fileFilter: imageExtFilter,

@@ -119,59 +119,59 @@ module.exports = {
   },
   editProdImg: async (req, res) => {
     const conn = await connection.promise().getConnection();
-    console.log(req.categoryFolder);
-    console.log("Masuk line 122, editProdImg");
+    // console.log(req.categoryFolder);
+    // console.log("Masuk line 122, editProdImg");
 
     const {id} = req.params;
 
     const { image_to_del, img_del_index } = req.headers;
-    console.log(image_to_del, img_del_index)
-    console.log(Boolean(image_to_del))
+    // console.log(image_to_del, img_del_index)
+    // console.log(Boolean(image_to_del))
     
     const { images } = req.files;
-    let newPath = `/assets/images/uploaded/${req.categoryFolder}/${images[0].filename}`;
-    console.log("Line 133 newPath: ", newPath)
+    let newPath = `"/assets/images/uploaded/${req.categoryFolder}/${images[0].filename}"`;
+    // console.log("Line 133 newPath: ", newPath)
 
-    let sql = "SELECT images FROM product WHERE id = ?";
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
 
-    const [imgResult] = await conn.query(sql, id)
+      let sql = "SELECT images FROM product WHERE id = ?";
 
-    console.log(imgResult[0].images);
+      const [imgResult] = await conn.query(sql, id);
 
-    let test = imgResult[0].images;
+      let newImgEditArr = imgResult[0].images;
 
-    test.splice(parseInt(img_del_index), 1, newPath);
+      newImgEditArr.forEach((val, index) => {
+        newImgEditArr[index] = `"${val}"`
+      })
 
-    console.log("Line 145 hasil splice: ", test);
+      newImgEditArr.splice(parseInt(img_del_index), 1, newPath);
 
-    fs.unlinkSync("./public" + image_to_del);
+      console.log(newImgEditArr);
 
-    conn.release();
+      console.log(`[${newImgEditArr}]`)
 
-    // try {
-    //   await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
-      
-    //   let sql = `Update product SET ? WHERE id = ?;`;
-    //   await conn.query(sql, [
-    //     {
-    //       name: name,
-    //       category_id: category_id,
-    //       weight: weight,
-    //       price: price,
-    //       product_cost: product_cost,
-    //       description: description
-    //     }, 
-    //     id
-    //   ]);
-    //   await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
-    //   conn.release();
-    //   return res.status(200).send({message: "Edit Image Success"});
-    // } catch (error) {
-    //   await conn.rollback(); // Rollback data klo terjadi error/gagal
-    //   conn.release();
-    //   console.log(error);
-    //   return res.status(500).send({ message: error.message || "Server error" });
-    // }
+      // console.log(imgResult[0].images);
+
+      // console.log("Line 145 hasil splice: ", test);
+
+      sql = `Update product SET ? WHERE id = ?;`;
+      await conn.query(sql, [{images: `[${newImgEditArr}]`}, id]);
+
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      if (image_to_del) {
+        fs.unlinkSync("./public" + image_to_del);
+        return res.status(200).send({message: "Edit Image Success"});
+      } else {
+        return res.status(200).send({message: "Edit Image Success"});
+      }
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
 
   // LIST PRODUK USER PAGE (GANGSAR)

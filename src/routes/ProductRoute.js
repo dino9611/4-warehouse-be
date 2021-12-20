@@ -35,14 +35,13 @@ const uploadFile = uploader(categoryFolder, "Product_").fields([
   { name: "images", maxCount: 3 }, // Key harus sama dengan yg dikirimkan dari body (FE)
 ]);
 
-// ! Testing
-const checkEditCatFolder = async (req, res, next) => {
+const editImgCatFolder = async (req, res, next) => {
   // Utk menentukan route folder uploaded product image by category
   const conn = await connection.promise().getConnection();
-  console.log("Line 42: ", req.headers.image_to_del);
-  console.log("Line 43: ", parseInt(req.headers.img_del_index));
+  // console.log("Line 42: ", req.headers.image_to_del);
+  // console.log("Line 43: ", parseInt(req.headers.img_del_index));
   const { category_id } = req.headers;
-  console.log("Masuk check edit cat folder");
+  // console.log("Masuk check edit cat folder");
   try {
     let sql = `SELECT category FROM category WHERE id = ?;`;
 
@@ -60,37 +59,26 @@ const checkEditCatFolder = async (req, res, next) => {
   }
 };
 
-const uploadFileEdit = (req, res, next) => {
-  console.log("Masuk upload file edit");
-  console.log("line 63: ", req.categoryFolder);
+const uploadEditImg = (req, res, next) => {
+  // console.log("Masuk upload file edit");
+  // console.log("line 63: ", req.categoryFolder);
   let upload = uploader(req.categoryFolder, "Product_").fields([
-    // Gunakan fields bila ingin > 1 upload file, klo 1 pake .single
     { name: "images", maxCount: 3 }, // Key harus sama dengan yg dikirimkan dari body (FE)
   ]);
   upload(req, res, (error) => {
     if (error) {
-      console.log("Masuk error line 70: ", error)
+      console.log(error);
     } else {
       next();
-    }
-  })
+    };
+  });
 };
-
-// ? uploader(categoryFolder, "Product_").fields([
-//   // Gunakan fields bila ingin > 1 upload file, klo 1 pake .single
-//   { name: "images", maxCount: 3 }, // Key harus sama dengan yg dikirimkan dari body (FE)
-// ]);
-
-// ! End of testing
 
 router.get("/category", getProdCategory);
 router.post("/determine-category", checkCategoryFolder);
 router.post("/add", uploadFile, addProduct(categoryFolder));
-
 router.patch("/edit/:id", editProdNoImg);
-
-router.patch("/edit/image/:id", checkEditCatFolder, uploadFileEdit, editProdImg);
-
+router.patch("/edit/image/:id", editImgCatFolder, uploadEditImg, editProdImg);
 router.get("/", listProduct);
 router.delete("/delete/:prodId", verifyPass, deleteProduct);
 
