@@ -3,7 +3,7 @@ const fs = require("fs");
 
 const uploader = (destination, filenamePrefix) => {
   let defaultPath = "./public/assets/images/uploaded/";
-  console.log(defaultPath);
+  console.log("default path line 6: ", defaultPath);
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       const directory = defaultPath + destination;

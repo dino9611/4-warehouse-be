@@ -86,10 +86,36 @@ module.exports = {
       }
     };
   },
-  editProduct: async (req, res) => {
-    console.log(req.query)
+  editProdNoImg: async (req, res) => {
+    console.log("Jalan /product/edit/:prodId");
+    const conn = await connection.promise().getConnection();
+    const {id} = req.params;
+    const {name, category_id, weight, price, product_cost, description} = req.body;
 
-
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+      
+      let sql = `Update product SET ? WHERE id = ?;`;
+      await conn.query(sql, [
+        {
+          name: name,
+          category_id: category_id,
+          weight: weight,
+          price: price,
+          product_cost: product_cost,
+          description: description
+        }, 
+        id
+      ]);
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      return res.status(200).send({message: "Edit Success"});
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
 
   // LIST PRODUK USER PAGE (GANGSAR)

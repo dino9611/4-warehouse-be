@@ -3,7 +3,7 @@ const router = express.Router();
 const {uploader, verifyPass} = require("../helpers/");
 const { connection } = require("../connection");
 const { productController } = require("./../controllers");
-const { getProdCategory, addProduct, listProduct, deleteProduct } = productController;
+const { getProdCategory, addProduct, editProdNoImg, listProduct, deleteProduct } = productController;
 
 let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product image
 
@@ -85,7 +85,9 @@ router.get("/category", getProdCategory);
 router.post("/determine-category", checkCategoryFolder);
 router.post("/add", uploadFile, addProduct(categoryFolder));
 
-router.patch("/edit/:prodId", checkEditCatFolder, uploadFileEdit, (req, res) => {
+router.patch("/edit/:id", editProdNoImg);
+
+router.patch("/edit/testimg/:prodId", checkEditCatFolder, uploadFileEdit, (req, res) => {
   console.log(req.categoryFolder);
   res.send("success")
 });
