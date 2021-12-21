@@ -9,8 +9,13 @@ module.exports = {
   },
 
   createTokenEmailVerified: (data) => {
-    const key = "tokenemailverif";
-    const token = jwt.sign(data, key, { expiresIn: "3m" });
+    const key = "verifEmail";
+    const token = jwt.sign(data, key, { expiresIn: "1m" });
+    return token;
+  },
+  createTokenVerified: (data) => {
+    const key = "sendEmail";
+    const token = jwt.sign(data, key);
     return token;
   },
 };
