@@ -251,4 +251,41 @@ module.exports = {
       return res.status(500).send({ message: error.message || "server eror" });
     }
   },
+  adminLogin: async (req, res) => {
+    const { inputtedUsername, inputtedPassword } = req.body;
+    const conn = await connection.promise().getConnection();
+
+    try {
+      let sql = `
+              SELECT id, username, email, is_verified, role_id FROM user 
+              WHERE username = ? and password = ?;
+            `;
+      const [userData] = await conn.query(sql, [
+        inputtedUsername,
+        inputtedPassword,
+        // ! Khusus sesi testing gunakan tanpa hash karena blm byk dummy data password nya pake hashpass, dapat menyebabkan salah matching password dgn db
+        // hashPass(inputtedPassword)
+      ]);
+
+      if (!userData.length) {
+        conn.release();
+        return res.send({ message: "Incorrect Username/Password!" }); // * Klo kyk gini bisa dapet di try
+        // throw { message: "Username/Password incorrect" }; // * Klo yg ini harus di catch
+      }
+      const dataToken = {
+        id: userData[0].id,
+        username: userData[0].username,
+        role_id: userData[0].role_id,
+      };
+
+      const accessToken = createTokenAccess(dataToken);
+      res.set("x-token-access", accessToken);
+      conn.release();
+      return res.status(200).send({ ...userData[0] });
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server Error" });
+    }
+  },
 };

@@ -22,11 +22,14 @@ const accessLogStream = fs.createWriteStream(
   }
 );
 
+// Middleware global start
+morgan.token("date", (req, res) => {
+  return new Date();
+});
 // app.use(
 //   morgan("method :url :status :res[content-length] - :response-time ms :date"),
 //   { stream: accessLogStream }
 // );
-
 app.use(express.json());
 app.use(
   cors({
@@ -35,6 +38,7 @@ app.use(
       "x-token-access",
       "x-token-refresh",
       "x-total-count",
+      "x-token-email",
     ], // To put token in headers
   })
 );
@@ -43,21 +47,21 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
 // Import Routes
-const { AuthRoutes, adminRoute } = require("./src/routes");
+const {
+  AuthRoutes,
+  productRoute,
+  adminRoute,
+  warehouseRoute,
+  profileRoute,
+} = require("./src/routes");
 
 // Routing
 app.use("/auth", AuthRoutes);
 app.use("/admin", adminRoute);
-
-// Routing
-// app.use("/auth");
-// app.use("/user");
-// app.use("/product");
-// app.use("/checkout");
-// app.use("/payment");
-// app.use("/cart");
-// app.use("/sales");
-// app.use("/order");
-// app.use("/warehouse");
+app.use("/profile", profileRoute);
+app.use("/auth", AuthRoutes);
+app.use("/product", productRoute);
+app.use("/admin", adminRoute);
+app.use("/warehouse", warehouseRoute);
 
 app.listen(PORT, () => console.log(`API running ${PORT}`));

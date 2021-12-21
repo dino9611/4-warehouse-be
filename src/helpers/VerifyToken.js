@@ -6,12 +6,8 @@ module.exports.VerifyTokenAccess = (req, res, next) => {
 
   jwt.verify(token, key, (err, decoded) => {
     if (err) {
-      // console.log("line 22 berenti dinsini file verirytoken");
       return res.status(401).send({ message: "user unauthorized" });
     }
-
-    // console.log("decoded :", decoded);
-    // data yang sudah di decript akan di masukkan kedalam variable req.user
     req.user = decoded;
     next();
   });
