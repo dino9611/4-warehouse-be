@@ -86,10 +86,143 @@ module.exports = {
       }
     };
   },
-  editProduct: async (req, res) => {
-    console.log(req.query)
+  editProdNoImg: async (req, res) => {
+    console.log("Jalan /product/edit/:id");
+    const conn = await connection.promise().getConnection();
+    const {id} = req.params;
+    const {name, category_id, weight, price, product_cost, description} = req.body;
 
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+      
+      let sql = `Update product SET ? WHERE id = ?;`;
+      await conn.query(sql, [
+        {
+          name: name,
+          category_id: category_id,
+          weight: weight,
+          price: price,
+          product_cost: product_cost,
+          description: description
+        }, 
+        id
+      ]);
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      return res.status(200).send({message: "Edit Success"});
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
+  },
+  editProdImg: async (req, res) => {
+    console.log("Jalan /product/edit/image/:id");
+    const conn = await connection.promise().getConnection();
+    const {id} = req.params;
+    const { image_to_del, img_del_index } = req.headers;
+    
+    const { images } = req.files;
+    let newPath = `"/assets/images/uploaded/${req.categoryFolder}/${images[0].filename}"`; // Utk menyiapkan file pathname baru agar bisa upload ke db sebagai JSON
 
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+
+      let sql = "SELECT images FROM product WHERE id = ?"; // Fetch data image terkait product id yg dituju
+      const [imgResult] = await conn.query(sql, id);
+
+      let newImgEditArr = imgResult[0].images; // Hasil array data images
+      newImgEditArr.forEach((val, index) => { // Looping & diberi "" agar nantinya bisa dimasukan kembali sebagai JSON ke MySql
+        newImgEditArr[index] = `"${val}"`
+      });
+      newImgEditArr.splice(parseInt(img_del_index), 1, newPath); // Masukan filepath image baru kedalam array sesuai index image yang diganti/edit dari FE
+      if (!newImgEditArr[1]) {
+        newImgEditArr.splice(1, 1); // Bila image kosong ditengah (index 1, diantara index 0 & 2), image index 2 otomatis menjadi index 1
+      };
+
+      sql = `Update product SET ? WHERE id = ?;`;
+      await conn.query(sql, [{images: `[${newImgEditArr}]`}, id]);
+
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      if (image_to_del) {
+        fs.unlinkSync("./public" + image_to_del); // Menghapus file image sebelumnya yang sekarang digantikan image baru
+        return res.status(200).send({message: "Edit Image Success"});
+      } else { // Bila tidak ada file image sebelumnya, maka langsung di-selesaikan
+        return res.status(200).send({message: "Edit Image Success"});
+      };
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
+  },
+  deleteProdImg: async (req, res) => {
+    console.log("Jalan /product/delete/image/:id");
+    const conn = await connection.promise().getConnection();
+    const {id} = req.params;
+    const {index_del_img, prev_img_path} = req.headers;
+
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+
+      let sql = "SELECT images FROM product WHERE id = ?"; // Fetch data image terkait product id yg dituju
+      const [imgResult] = await conn.query(sql, id);
+
+      let newImgArray = imgResult[0].images; // Hasil array data images
+      newImgArray.forEach((val, index) => { // Looping & diberi "" agar nantinya bisa dimasukan kembali sebagai JSON ke MySql
+        if (index == index_del_img) {
+          newImgArray[index] = "";
+        } else {
+          newImgArray[index] = `"${val}"`
+        };
+      });
+      newImgArray.splice(parseInt(index_del_img), 1); // Delete file image sebelumnya dgn menyesuaikan index delete yg diterima dari FE
+
+      sql = `Update product SET ? WHERE id = ?;`;
+      await conn.query(sql, [{images: `[${newImgArray}]`}, id]);
+
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      fs.unlinkSync("./public" + prev_img_path); // Menghapus file image sebelumnya yang sekarang digantikan image baru
+      return res.status(200).send({message: "Delete Image Success"});
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
+  },
+  deleteProduct: async (req, res) => {
+    console.log("Jalan /product/delete/:prodId");
+    const prodId = req.params.prodId;
+    const conn = await connection.promise().getConnection();
+
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+      
+      let sql = `SELECT id FROM product where id = ?;`;
+      const [result] = await conn.query(sql, [prodId])
+
+      if (!result.length) {
+        conn.release();
+        return res.send({failMessage: "Product ID not found, please contact Super Admin"});
+      } else {
+        sql = `UPDATE product SET is_delete = ? WHERE id = ?;`;
+        await conn.query(sql, [1, prodId]);
+
+        await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+        conn.release();
+        return res.status(200).send({message: "Delete Success (list will refresh)"});
+      }
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
 
   // LIST PRODUK USER PAGE (GANGSAR)
@@ -151,33 +284,4 @@ module.exports = {
       console.log(error);
     }
   },
-  deleteProduct: async (req, res) => {
-      console.log("Jalan /product/delete/:prodId");
-      const prodId = req.params.prodId;
-      const conn = await connection.promise().getConnection();
-
-      try {
-        await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
-        
-        let sql = `SELECT id FROM product where id = ?;`;
-        const [result] = await conn.query(sql, [prodId])
-
-        if (!result.length) {
-          conn.release();
-          return res.send({failMessage: "Product ID not found, please contact Super Admin"});
-        } else {
-          sql = `UPDATE product SET is_delete = ? WHERE id = ?;`;
-          await conn.query(sql, [1, prodId]);
-
-          await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
-          conn.release();
-          return res.status(200).send({message: "Delete Success (list will refresh)"});
-        }
-      } catch (error) {
-        await conn.rollback(); // Rollback data klo terjadi error/gagal
-        conn.release();
-        console.log(error);
-        return res.status(500).send({ message: error.message || "Server error" });
-      }
-  }
 };

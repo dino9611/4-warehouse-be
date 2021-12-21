@@ -107,5 +107,27 @@ module.exports = {
       console.log(error);
       return res.status(500).send({ message: error.message || "Server error" });
     };
-}
+  },
+  getProdToEdit: async (req, res) => {
+    console.log("Jalan /admin/product/detail");
+    const conn = await connection.promise().getConnection();
+    const { id } = req.query; // Dari frontend
+
+    try {
+      let sql = `
+            SELECT p.images, p.id AS product_id, CONCAT(c.category, "-", YEAR(p.create_on), "0", p.id) AS SKU, p.name, p.category_id, c.category, p.weight, p.price, p.product_cost, description FROM product AS p
+            JOIN category c
+            ON p.category_id = c.id
+            WHERE p.id = ?;
+        `;
+      const [productResult] = await conn.query(sql, [id]);
+
+      conn.release();
+      return res.status(200).send(productResult[0]);
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    };
+  },
 };
