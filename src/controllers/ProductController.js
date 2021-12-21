@@ -118,6 +118,7 @@ module.exports = {
     }
   },
   editProdImg: async (req, res) => {
+    console.log("Jalan /product/edit/image/:prodId");
     const conn = await connection.promise().getConnection();
     // console.log(req.categoryFolder);
     // console.log("Masuk line 122, editProdImg");
@@ -135,21 +136,25 @@ module.exports = {
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
 
-      let sql = "SELECT images FROM product WHERE id = ?";
+      let sql = "SELECT images FROM product WHERE id = ?"; // Fetch data image terkait product id yg dituju
 
       const [imgResult] = await conn.query(sql, id);
 
-      let newImgEditArr = imgResult[0].images;
+      let newImgEditArr = imgResult[0].images; // Hasil array data images
 
-      newImgEditArr.forEach((val, index) => {
+      newImgEditArr.forEach((val, index) => { // Looping & diberi "" agar nantinya bisa dimasukan kembali sebagai JSON ke MySql
         newImgEditArr[index] = `"${val}"`
-      })
+      });
 
-      newImgEditArr.splice(parseInt(img_del_index), 1, newPath);
+      newImgEditArr.splice(parseInt(img_del_index), 1, newPath); // Masukan filepath image baru kedalam array sesuai index image yang diganti/edit dari FE
 
-      console.log(newImgEditArr);
+      if (!newImgEditArr[1]) {
+        newImgEditArr.splice(1, 1);
+      };
 
-      console.log(`[${newImgEditArr}]`)
+      // console.log(newImgEditArr);
+
+      // console.log(`[${newImgEditArr}]`)
 
       // console.log(imgResult[0].images);
 
@@ -161,11 +166,57 @@ module.exports = {
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
       if (image_to_del) {
-        fs.unlinkSync("./public" + image_to_del);
+        fs.unlinkSync("./public" + image_to_del); // Menghapus file image sebelumnya yang sekarang digantikan image baru
         return res.status(200).send({message: "Edit Image Success"});
-      } else {
+      } else { // Bila tidak ada file image sebelumnya, maka langsung di-selesaikan
         return res.status(200).send({message: "Edit Image Success"});
-      }
+      };
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
+  },
+  deleteProdImg: async (req, res) => {
+    console.log("Jalan /product/delete/image/:prodId");
+    const {id} = req.params;
+    const conn = await connection.promise().getConnection();
+    const {index_del_img, prev_img_path} = req.headers;
+
+    console.log(id);
+    console.log(index_del_img);
+    console.log(prev_img_path);
+
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+
+      let sql = "SELECT images FROM product WHERE id = ?"; // Fetch data image terkait product id yg dituju
+
+      const [imgResult] = await conn.query(sql, id);
+
+      let newImgArray = imgResult[0].images; // Hasil array data images
+      console.log("Line 195 stlh bikin array: ", newImgArray)
+
+      newImgArray.forEach((val, index) => { // Looping & diberi "" agar nantinya bisa dimasukan kembali sebagai JSON ke MySql
+        if (index == index_del_img) {
+          newImgArray[index] = "";
+        } else {
+          newImgArray[index] = `"${val}"`
+        };
+      });
+      console.log("Line 204 stlh looping array: ", newImgArray);
+
+      newImgArray.splice(parseInt(index_del_img), 1);
+      console.log("Line 211 stlh splice array: ", newImgArray)
+
+      sql = `Update product SET ? WHERE id = ?;`;
+      await conn.query(sql, [{images: `[${newImgArray}]`}, id]);
+
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      fs.unlinkSync("./public" + prev_img_path); // Menghapus file image sebelumnya yang sekarang digantikan image baru
+      return res.status(200).send({message: "Delete Image Success"});
     } catch (error) {
       await conn.rollback(); // Rollback data klo terjadi error/gagal
       conn.release();

@@ -3,7 +3,7 @@ const router = express.Router();
 const {uploader, verifyPass} = require("../helpers/");
 const { connection } = require("../connection");
 const { productController } = require("./../controllers");
-const { getProdCategory, addProduct, editProdNoImg, editProdImg, listProduct, deleteProduct } = productController;
+const { getProdCategory, addProduct, editProdNoImg, editProdImg, deleteProdImg, listProduct, deleteProduct } = productController;
 
 let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product image
 
@@ -41,7 +41,7 @@ const editImgCatFolder = async (req, res, next) => {
   // console.log("Line 42: ", req.headers.image_to_del);
   // console.log("Line 43: ", parseInt(req.headers.img_del_index));
   const { category_id } = req.headers;
-  // console.log("Masuk check edit cat folder");
+  console.log("Masuk check edit cat folder", category_id);
   try {
     let sql = `SELECT category FROM category WHERE id = ?;`;
 
@@ -79,6 +79,7 @@ router.post("/determine-category", checkCategoryFolder);
 router.post("/add", uploadFile, addProduct(categoryFolder));
 router.patch("/edit/:id", editProdNoImg);
 router.patch("/edit/image/:id", editImgCatFolder, uploadEditImg, editProdImg);
+router.delete("/delete/image/:id", deleteProdImg);
 router.get("/", listProduct);
 router.delete("/delete/:prodId", verifyPass, deleteProduct);
 
