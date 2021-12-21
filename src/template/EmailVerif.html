@@ -8,14 +8,15 @@
   </head>
   <body>
     <center>
-      <!-- <img
-        src="https://static.wikia.nocookie.net/naruto/images/d/dd/Naruto_Uzumaki%21%21.png/revision/latest?cb=20161013233552"
-      /> -->
-      <h1 style="color: rgb(53, 72, 107)">
-        hello {{nama}}, ini link verifikasinya :
-        <a href="http://localhost:2004/verified?token={{token}}"> klik ini</a>
+      <img src="../../public/assets/images/logo/Logo.png" />
+      <h3>
+        Hai {{nama}}, Kamu baru saja melakukan registrasi akun The Local. Tolong
+        Verifikasi email Anda dengan klik "Verifikasi disini"
+        <a href="http://localhost:3000/verify-email?token={{token}}&xUser={{nama}}">
+          Verifikasi disini</a
+        >
         <!-- <a href="http://localhost:3000/verified/{{token}}"> klik ini</a> -->
-      </h1>
+      </h3>
     </center>
   </body>
 </html>

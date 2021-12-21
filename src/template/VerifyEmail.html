@@ -8,23 +8,26 @@
   </head>
   <body>
     <center>
-      <h1>You're almost there!</h1>
-      <h4>Hi, {{name}}</h4>
-      <h4 href="http://localhost:2004/verify/{{token}}">
-        Finish setting your account by verifying through the link below
-      </h4>
-      <h4 style="margin-top: 16px">
+      <img
+        src="http://localhost:2004/assets/images/logo/Logo.png"
+        width="200"
+        height="100"
+      />
+      <h1>Email Confirmation</h1>
+      <h3>Hai {{nama}},</h3>
+      <h4>Tolong klik "Verifikasi Sekarang" untuk memverifikasi email anda</h4>
+      <h4 style="margin-top: 25px">
         <a
-          href="http://localhost:2004/verify/{{token}}"
+          href="http://localhost:3000/verify-email?token={{token}}&xtoken={{sendToken}}"
           style="
-            background-color: lightgray;
-            border-radius: 4px;
-            color: black;
-            padding: 12px;
+            background-color: #b24629;
+            border-radius: 100px;
+            color: white;
+            padding: 10px 12px;
             text-decoration: none;
           "
         >
-          Verify yourself
+          Verifikasi Sekarang
         </a>
       </h4>
     </center>

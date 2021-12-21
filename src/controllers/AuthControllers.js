@@ -1,7 +1,8 @@
 const { connection } = require("./../connection");
 const handlebars = require("handlebars");
 const { hashPass, createToken, transporter } = require("./../helpers");
-const { createTokenAccess, createTokenEmailVerified } = createToken;
+const { createTokenAccess, createTokenEmailVerified, createTokenVerified } =
+  createToken;
 const path = require("path");
 const fs = require("fs");
 const strengthPass = (password) => {
@@ -12,6 +13,8 @@ const strengthPass = (password) => {
   let result = strengthReq.test(password);
   return result;
 };
+const NodeCache = require("node-cache");
+const myCache = new NodeCache();
 
 module.exports = {
   register: async (req, res) => {
@@ -28,24 +31,28 @@ module.exports = {
         if (dataUser1.length && dataUser2.length) {
           console.log("Email & Username telah terdaftar");
           //throw bisa masuk di trycatch/.then
+          conn.release();
           throw {
             message: "Email & Username telah terdaftar",
           };
           //cek username yang sama
         } else if (dataUser1.length) {
           console.log("Username telah Terdaftar");
+          conn.release();
           throw {
             message: "Username telah Terdaftar",
           };
         } else {
           //cek email yang sama
           console.log("Email telah Terdaftar");
+          conn.release();
           throw { message: "Email telah Terdaftar" };
         }
       }
-      //proteksi strength password
+      // proteksi strength password
       if (!strengthPass(password)) {
         console.log("Password tidak sesuai dengan ketentuan");
+        conn.release();
         throw {
           message:
             "Password harus memiliki : Huruf Kecil, Huruf Besar, Angka, Minimal 8 karakter, dan Simbol",
@@ -76,11 +83,16 @@ module.exports = {
         id: userData[0].id,
         username: userData[0].username,
         role_id: userData[0].role_id,
+        email: userData[0].email,
+        created: new Date().getTime(),
       };
       conn.release();
+      //set data untuk verif
+      myCache.set(userData[0].id, dataToken, 250);
       const emailToken = createTokenEmailVerified(dataToken);
       const accessToken = createTokenAccess(dataToken);
-      let filepath = path.resolve(__dirname, "../template/EmailVerif.html");
+      const sendEmail = createTokenVerified(dataToken);
+      let filepath = path.resolve(__dirname, "../template/VerifyEmail.html");
       // console.log(filepath);
       // ubah html jadi string pake fs.readfile
       let htmlString = fs.readFileSync(filepath, "utf-8");
@@ -88,17 +100,18 @@ module.exports = {
       const htmlToEmail = template({
         nama: username,
         token: emailToken,
+        sendToken: sendEmail,
       });
       console.log(htmlToEmail);
-      // email with tamplate html
+      // email with template html
       transporter.sendMail({
-        from: "Admin <taurankevin245@gmail.com>",
+        from: "Admin <gangsar45@gmail.com>",
         to: email,
         subject: "Email verifikasi",
         html: htmlToEmail,
       });
       res.set("x-token-access", accessToken);
-      return res.status(200).send({ ...userData[0] });
+      return res.status(200).send({ token: accessToken, data: userData[0] });
     } catch (error) {
       conn.release();
       console.log(error);
@@ -117,14 +130,21 @@ module.exports = {
         hashPass(password),
       ]);
       if (!userData.length) {
-        throw { message: "Username/Email Not Found" };
+        throw { message: "Username/Email Tidak Ditemukan" };
       }
+      if (userData[0].is_verified === 0) {
+        throw {
+          message:
+            "Akun Anda belum di Verifikasi, Tolong cek Email untuk Verifikasi",
+        };
+      }
+
       const dataToken = {
         id: userData[0].id,
         username: userData[0].username,
         role_id: userData[0].role_id,
       };
-
+      //proteksi kalo belom verif gaboleh login
       const accessToken = createTokenAccess(dataToken);
       res.set("x-token-access", accessToken);
       return res.status(200).send({ ...userData[0] });
@@ -152,41 +172,120 @@ module.exports = {
       return res.status(500).send({ message: error.message || "server eror" });
     }
   },
-  adminLogin: async (req, res) => {
-      const { inputtedUsername, inputtedPassword } = req.body;
-      const conn = await connection.promise().getConnection();
+  verifyEmail: async (req, res) => {
+    const { id, created } = req.user;
+    const conn = await connection.promise().getConnection();
 
-      try {
-        let sql = `
+    try {
+      //untuk get data yang tadi di set
+      const value = myCache.get(id);
+      //cek cache yang di get tidak sesuai
+      if (!value) {
+        throw { message: "data tidak sesuai" };
+      }
+      //cek waktu pembuatan token sama atau ngga
+      if (created !== value.created) {
+        throw { message: "token kadaluwarsa" };
+      }
+      let updateData = {
+        is_verified: 1,
+      };
+      //update data di database
+      let sql = `update user set ? where id = ?`;
+      await conn.query(sql, [updateData, id]);
+      //hapus yang ada di cache kalau verifynya berhasil
+      myCache.del(id);
+      // proteksi kalo udh verif
+      conn.release();
+      // let [userData] = await conn.query(sql, [id]);
+      return res.status(200).send({ message: "Verifikasi berhasil " });
+    } catch (error) {
+      console.log(error);
+      conn.release();
+      return res.status(500).send({ message: error.message || "server eror" });
+    }
+  },
+  sendVerifyEmail: async (req, res) => {
+    const { id, email, username, role_id } = req.user;
+    const dataToken = {
+      id: id,
+      username: username,
+      role_id: role_id,
+      email: email,
+      created: new Date().getTime(),
+    };
+    const conn = await connection.promise().getConnection();
+    myCache.set(dataToken.id, dataToken, 250);
+    try {
+      const value = myCache.get(dataToken.id);
+      if (!value) {
+        throw { message: "data tidak sesuai" };
+      }
+      const emailToken = createTokenEmailVerified(dataToken);
+      const sendEmail = createTokenVerified(dataToken);
+      let filepath = path.resolve(__dirname, "../template/VerifyEmail.html");
+      // console.log(filepath);
+      // ubah html jadi string pake fs.readfile
+      let htmlString = fs.readFileSync(filepath, "utf-8");
+      const template = handlebars.compile(htmlString);
+      const htmlToEmail = template({
+        nama: username,
+        token: emailToken,
+        sendToken: sendEmail,
+      });
+      console.log(htmlToEmail);
+      // email with template html
+      transporter.sendMail({
+        from: "Admin <gangsar45@gmail.com>",
+        to: dataToken.email,
+        subject: "Email verifikasi",
+        html: htmlToEmail,
+      });
+
+      return res
+        .status(200)
+        .send({ message: "Email verifikasi berhasil dikirim" });
+    } catch (error) {
+      console.log(error);
+      conn.release();
+      return res.status(500).send({ message: error.message || "server eror" });
+    }
+  },
+  adminLogin: async (req, res) => {
+    const { inputtedUsername, inputtedPassword } = req.body;
+    const conn = await connection.promise().getConnection();
+
+    try {
+      let sql = `
               SELECT id, username, email, is_verified, role_id FROM user 
               WHERE username = ? and password = ?;
             `;
-        const [userData] = await conn.query(sql, [
-            inputtedUsername,
-            inputtedPassword 
-            // ! Khusus sesi testing gunakan tanpa hash karena blm byk dummy data password nya pake hashpass, dapat menyebabkan salah matching password dgn db
-            // hashPass(inputtedPassword) 
-        ]);
-        
-        if (!userData.length) {
-          conn.release();
-          return res.send({message: "Incorrect Username/Password!"}); // * Klo kyk gini bisa dapet di try
-          // throw { message: "Username/Password incorrect" }; // * Klo yg ini harus di catch
-        }
-        const dataToken = {
-          id: userData[0].id,
-          username: userData[0].username,
-          role_id: userData[0].role_id,
-        };
-  
-        const accessToken = createTokenAccess(dataToken);
-        res.set("x-token-access", accessToken);
+      const [userData] = await conn.query(sql, [
+        inputtedUsername,
+        inputtedPassword,
+        // ! Khusus sesi testing gunakan tanpa hash karena blm byk dummy data password nya pake hashpass, dapat menyebabkan salah matching password dgn db
+        // hashPass(inputtedPassword)
+      ]);
+
+      if (!userData.length) {
         conn.release();
-        return res.status(200).send({ ...userData[0] });
-      } catch (error) {
-        conn.release();
-        console.log(error);
-        return res.status(500).send({ message: error.message || "Server Error" });
+        return res.send({ message: "Incorrect Username/Password!" }); // * Klo kyk gini bisa dapet di try
+        // throw { message: "Username/Password incorrect" }; // * Klo yg ini harus di catch
       }
-  }
+      const dataToken = {
+        id: userData[0].id,
+        username: userData[0].username,
+        role_id: userData[0].role_id,
+      };
+
+      const accessToken = createTokenAccess(dataToken);
+      res.set("x-token-access", accessToken);
+      conn.release();
+      return res.status(200).send({ ...userData[0] });
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server Error" });
+    }
+  },
 };
