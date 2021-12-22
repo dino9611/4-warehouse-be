@@ -53,6 +53,7 @@ const {
   adminRoute,
   warehouseRoute,
   profileRoute,
+  salesRoute
 } = require("./src/routes");
 
 // Routing
@@ -63,5 +64,6 @@ app.use("/auth", AuthRoutes);
 app.use("/product", productRoute);
 app.use("/admin", adminRoute);
 app.use("/warehouse", warehouseRoute);
+app.use("/sales", salesRoute);
 
 app.listen(PORT, () => console.log(`API running ${PORT}`));
