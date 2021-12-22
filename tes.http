@@ -2,7 +2,7 @@ GET http://localhost:3004/product?page=0&limit=4 HTTP/1.1
 Content-Type: application/json
 
 ###
-GET http://localhost:3004/product/list-category HTTP/1.1
+GET http://localhost:2004/product/list-category HTTP/1.1
 Content-Type: application/json
 ### Tes tambah produk
 POST http://localhost:3004/product/category HTTP/1.1
@@ -55,6 +55,29 @@ Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjcsInVzZXJuYW1lIjoidXNlcjkiLCJyb2xlX2lkIjozLCJpYXQiOjE2Mzg5Mzc0ODIsImV4cCI6MTYzODk4MDY4Mn0.rBT32wHA1CHGHjE3zOmCDEua_7lQUwNb7zhJ8VDuRzI
 
 ### 
-PATCH http://localhost:3004/product/edit/10 HTTP/1.1
+PATCH http://localhost:2004/product/edit/10 HTTP/1.1
 Content-Type: application/json
 prod_category: 2
+
+### 
+PATCH  http://localhost:2004/user/default-address/1 HTTP/1.1
+Content-Type: application/json
+
+{
+    "user_id" : 1
+}
+### get address
+GET http://localhost:2004/user/address/1 HTTP/1.1
+Content-Type: application/json
+
+###
+POST  http://localhost:2004/user/address HTTP/1.1
+Content-Type: application/json
+
+{
+    "user_id" : 3,
+    "address": "pekanbarub",
+    "longitude": "-5.234",
+    "latitude": "109.56"
+
+}
