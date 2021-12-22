@@ -81,4 +81,34 @@ module.exports = {
             return res.status(500).send({ message: error.message || "Server error" });
         }
     },
+    getStatusContribution: async (req, res) => {
+        console.log("Jalan /sales/status-contribution");
+        const conn = await connection.promise().getConnection();
+        const {filter_year} = req.headers;
+
+        try {
+            let sql = `
+                SELECT 
+                so.status, 
+                SUM(od.price) AS amount, 
+                ROUND(SUM(od.price) * 100 / (SELECT SUM(price) AS c FROM order_detail), 1) AS contribution 
+                FROM order_detail AS od 
+                    JOIN orders o 
+                    ON od.orders_id = o.id 
+                    JOIN status_order so 
+                    ON o.status_id = so.id 
+                    WHERE YEAR(o.create_on) = 2021 
+                    GROUP BY status 
+                    ORDER BY so.id ASC;
+            `
+            const [statusResult] = await conn.query(sql, [1, 2, parseInt(filter_year)]);
+
+            conn.release();
+            return res.status(200).send(statusResult);
+        } catch (error) {
+            conn.release();
+            console.log(error);
+            return res.status(500).send({ message: error.message || "Server error" });
+        }
+    },
 }
