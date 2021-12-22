@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const { salesController } = require("./../controllers");
-const { getRevenue } = salesController;
+const { getMonthlyRevenue, getPotentialRevenue } = salesController;
 
-router.get("/revenue", getRevenue);
+router.get("/monthly-revenue", getMonthlyRevenue);
+router.get("/potential-revenue", getPotentialRevenue);
 
 module.exports = router;
