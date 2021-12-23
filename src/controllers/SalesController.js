@@ -111,4 +111,88 @@ module.exports = {
             return res.status(500).send({ message: error.message || "Server error" });
         }
     },
+    getTopProdQty: async (req, res) => {
+        console.log("Jalan /sales/top-prod-qty");
+        const conn = await connection.promise().getConnection();
+        const {filter_year} = req.headers;
+
+        try {
+            let sql = `SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));`
+            await conn.query(sql);
+
+            sql = `
+                SELECT od.product_id, p.name, SUM(od.qty) AS qty_sold FROM order_detail AS od
+                JOIN orders o
+                ON od.orders_id = o.id
+                JOIN product p
+                ON od.product_id = p.id
+                WHERE o.status_id = ? AND YEAR(o.create_on) = ?
+                GROUP BY od.product_id
+                ORDER BY qty_sold DESC
+                LIMIT 5;
+            `
+            const [topProdResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+
+            conn.release();
+            return res.status(200).send(topProdResult);
+        } catch (error) {
+            conn.release();
+            console.log(error);
+            return res.status(500).send({ message: error.message || "Server error" });
+        }
+    },
+    getTopProdVal: async (req, res) => {
+        console.log("Jalan /sales/top-prod-qty");
+        const conn = await connection.promise().getConnection();
+        const {filter_year} = req.headers;
+
+        try {
+            let sql = `
+                SELECT od.product_id, p.name, SUM(od.price) AS sales_value FROM order_detail AS od
+                JOIN orders o
+                ON od.orders_id = o.id
+                JOIN product p
+                ON od.product_id = p.id
+                WHERE o.status_id = ? AND YEAR(o.create_on) = ?
+                GROUP BY od.product_id
+                ORDER BY sales_value DESC
+                LIMIT 5;
+            `
+            const [topProdResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+
+            conn.release();
+            return res.status(200).send(topProdResult);
+        } catch (error) {
+            conn.release();
+            console.log(error);
+            return res.status(500).send({ message: error.message || "Server error" });
+        }
+    },
+    getTopUsers: async (req, res) => {
+        console.log("Jalan /sales/top-users");
+        const conn = await connection.promise().getConnection();
+        const {filter_year} = req.headers;
+
+        try {
+            let sql = `
+                SELECT u.id AS user_id, u.username, SUM(od.price) AS total_transaction_value FROM user AS u
+                JOIN orders o
+                ON u.id = o.user_id
+                JOIN order_detail od
+                ON o.id = od.orders_id
+                WHERE o.status_id = ? AND YEAR(o.create_on) = ?
+                GROUP BY u.id
+                ORDER BY total_transaction_value DESC
+                LIMIT 5;
+            `
+            const [topProdResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+
+            conn.release();
+            return res.status(200).send(topProdResult);
+        } catch (error) {
+            conn.release();
+            console.log(error);
+            return res.status(500).send({ message: error.message || "Server error" });
+        }
+    },
 }
