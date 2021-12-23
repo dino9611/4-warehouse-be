@@ -7,10 +7,7 @@ module.exports = {
         const {filter_year} = req.headers;
 
         try {
-            let sql = `SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));`
-            await conn.query(sql);
-
-            sql = `
+            let sql = `
                 SELECT 
                 SUM(IF(month = 'Jan', revenue, 0)) AS 'January',
                 SUM(IF(month = 'Feb', revenue, 0)) AS 'February',
@@ -47,10 +44,7 @@ module.exports = {
         const {filter_year} = req.headers;
 
         try {
-            let sql = `SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));`
-            await conn.query(sql);
-
-            sql = `
+            let sql = `
                 SELECT 
                 SUM(IF(month = 'Jan', revenue, 0)) AS 'January',
                 SUM(IF(month = 'Feb', revenue, 0)) AS 'February',
@@ -117,10 +111,7 @@ module.exports = {
         const {filter_year} = req.headers;
 
         try {
-            let sql = `SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));`
-            await conn.query(sql);
-
-            sql = `
+            let sql = `
                 SELECT od.product_id, p.name, SUM(od.qty) AS qty_sold FROM order_detail AS od
                 JOIN orders o
                 ON od.orders_id = o.id
@@ -196,3 +187,5 @@ module.exports = {
         }
     },
 }
+
+// 'STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'
