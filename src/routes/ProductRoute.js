@@ -3,7 +3,8 @@ const router = express.Router();
 const uploader = require("../helpers/Uploader");
 const { connection } = require("../connection");
 const { productController } = require("./../controllers");
-const { getProdCategory, addProduct, listProduct } = productController;
+const { getProdCategory, addProduct, listProduct, getDetailedProduct } =
+  productController;
 
 let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product image
 
@@ -39,5 +40,6 @@ router.get("/category", getProdCategory);
 router.post("/determine-category", checkCategoryFolder);
 router.post("/add", uploadFile, addProduct(categoryFolder));
 router.get("/", listProduct);
+router.get("/detailed-product/:productId", getDetailedProduct);
 
 module.exports = router;
