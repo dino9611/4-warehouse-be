@@ -62,10 +62,10 @@ module.exports = {
                         FROM order_detail AS od
                         JOIN orders o
                         ON od.orders_id = o.id
-                        WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? OR status_id = ? AND YEAR(o.create_on) = ?
+                        WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND YEAR(o.create_on) = ?
                         GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub;
             `
-            const [revenueResult] = await conn.query(sql, [1, 2, parseInt(filter_year)]);
+            const [revenueResult] = await conn.query(sql, [parseInt(filter_year)]);
 
             conn.release();
             return res.status(200).send(revenueResult[0]);
@@ -82,7 +82,7 @@ module.exports = {
 
         try {
             let sql = `
-                SELECT SUM(revenue) AS total_yearly
+                SELECT IFNULL(SUM(revenue), 0) AS total_yearly
                 FROM (SELECT DATE_FORMAT(o.create_on, "%b") AS month, SUM(od.price) AS revenue
                     FROM order_detail AS od
                     JOIN orders o
@@ -94,6 +94,30 @@ module.exports = {
 
             conn.release();
             return res.status(200).send(revenueResult[0]);
+        } catch (error) {
+            conn.release();
+            console.log(error);
+            return res.status(500).send({ message: error.message || "Server error" });
+        }
+    },
+    getNetSales: async (req, res) => {
+        console.log("Jalan /sales/net-sales");
+        const conn = await connection.promise().getConnection();
+        const {filter_year} = req.headers;
+
+        try {
+            let sql = `
+                SELECT IFNULL((SUM(od.qty) * p.price) - (SUM(od.qty) * p.product_cost), 0) AS net_sales FROM product AS p 
+                JOIN order_detail od
+                ON p.id = od.product_id
+                JOIN orders o
+                ON od.orders_id = o.id
+                WHERE o.status_id = ? AND YEAR(o.create_on) = ?;
+            `
+            const [netSalesResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+
+            conn.release();
+            return res.status(200).send(netSalesResult[0]);
         } catch (error) {
             conn.release();
             console.log(error);

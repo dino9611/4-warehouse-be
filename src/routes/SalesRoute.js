@@ -12,11 +12,13 @@ const {
     getTopUsers, 
     getTotalUsers, 
     getCategoryContribution,
+    getNetSales
 } = salesController;
 
 router.get("/monthly-revenue", getMonthlyRevenue);
 router.get("/potential-revenue", getPotentialRevenue);
 router.get("/yearly-revenue", getYearlyRevenue);
+router.get("/net-sales", getNetSales);
 router.get("/status-contribution", getStatusContribution);
 router.get("/top-prod-qty", getTopProdQty);
 router.get("/top-prod-val", getTopProdVal);
