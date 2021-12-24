@@ -3,7 +3,6 @@ const fs = require("fs");
 
 const uploader = (destination, filenamePrefix) => {
   let defaultPath = "./public/assets/images/uploaded/";
-
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       const directory = defaultPath + destination;
@@ -46,7 +45,6 @@ const uploader = (destination, filenamePrefix) => {
       cb(null, true);
     }
   };
-
   return multer({
     storage: storage,
     fileFilter: imageExtFilter,
