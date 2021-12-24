@@ -140,7 +140,7 @@ module.exports = {
                     ON od.orders_id = o.id 
                     JOIN status_order so 
                     ON o.status_id = so.id 
-                    WHERE YEAR(o.create_on) = 2021 
+                    WHERE YEAR(o.create_on) = ?
                     GROUP BY status 
                     ORDER BY so.id ASC;
             `
