@@ -305,7 +305,7 @@ module.exports = {
 
         try {
             let sql = `
-                SELECT SUM(qty) AS total_qty_sold FROM order_detail AS od
+                SELECT IFNULL(SUM(qty), 0) AS total_qty_sold FROM order_detail AS od
                 JOIN orders o
                 ON od.orders_id = o.id
                 WHERE status_id = ? AND YEAR(o.create_on) = ?;
