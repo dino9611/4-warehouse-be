@@ -30,6 +30,11 @@ module.exports = {
             `
             const [revenueResult] = await conn.query(sql, [2, parseInt(filter_year)]);
 
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            for (let i = 0; i < monthNames.length; i++) {
+                revenueResult[0][monthNames[i]] = parseInt(revenueResult[0][monthNames[i]]);
+            };
+
             conn.release();
             return res.status(200).send(revenueResult[0]);
         } catch (error) {
@@ -66,6 +71,11 @@ module.exports = {
                         GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub;
             `
             const [revenueResult] = await conn.query(sql, [parseInt(filter_year)]);
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            for (let i = 0; i < monthNames.length; i++) {
+                revenueResult[0][monthNames[i]] = parseInt(revenueResult[0][monthNames[i]]);
+            };
 
             conn.release();
             return res.status(200).send(revenueResult[0]);
@@ -144,7 +154,7 @@ module.exports = {
                     GROUP BY status 
                     ORDER BY so.id ASC;
             `
-            const [statusResult] = await conn.query(sql, [1, 2, parseInt(filter_year)]);
+            const [statusResult] = await conn.query(sql, [parseInt(filter_year)]);
 
             conn.release();
             return res.status(200).send(statusResult);
@@ -202,6 +212,41 @@ module.exports = {
 
             conn.release();
             return res.status(200).send(topProdResult);
+        } catch (error) {
+            conn.release();
+            console.log(error);
+            return res.status(500).send({ message: error.message || "Server error" });
+        }
+    },
+    getCategoryContribution: async (req, res) => {
+        console.log("Jalan /sales/category-contribution");
+        const conn = await connection.promise().getConnection();
+        const {filter_year} = req.headers;
+
+        try {
+            let sql = `
+                SELECT 
+                c.category, 
+                SUM(od.price) AS amount, 
+                ROUND(SUM(od.price) * 100 / (SELECT SUM(price) AS tc FROM order_detail 
+                    JOIN orders o 
+                    ON order_detail.orders_id = o.id 
+                    WHERE o.status_id = ? AND YEAR(o.create_on) = ?), 1) AS contribution 
+                    FROM category AS c
+                        JOIN product p
+                        ON c.id = p.category_id
+                        JOIN order_detail od
+                        ON p.id = od.product_id
+                        JOIN orders o
+                        ON od.orders_id = o.id 
+                        WHERE o.status_id = ? AND YEAR(o.create_on) = ? 
+                        GROUP BY c.category
+                        ORDER BY amount DESC;
+            `
+            const [categoryResult] = await conn.query(sql, [2, parseInt(filter_year), 2, parseInt(filter_year)]);
+
+            conn.release();
+            return res.status(200).send(categoryResult);
         } catch (error) {
             conn.release();
             console.log(error);
@@ -276,35 +321,45 @@ module.exports = {
             return res.status(500).send({ message: error.message || "Server error" });
         }
     },
-    getCategoryContribution: async (req, res) => {
-        console.log("Jalan /sales/category-contribution");
+    getAverageTransaction: async (req, res) => {
+        console.log("Jalan /sales/average-transaction");
         const conn = await connection.promise().getConnection();
         const {filter_year} = req.headers;
 
         try {
             let sql = `
-                SELECT 
-                c.category, 
-                SUM(od.price) AS amount, 
-                ROUND(SUM(od.price) * 100 / (SELECT SUM(price) AS tc FROM order_detail 
-                    JOIN orders o 
-                    ON order_detail.orders_id = o.id 
-                    WHERE o.status_id = ? AND YEAR(o.create_on) = ?), 1) AS contribution 
-                    FROM category AS c
-                        JOIN product p
-                        ON c.id = p.category_id
+                SELECT IFNULL(ROUND(AVG(total_price), 0), 0) AS avg_transaction 
+                    FROM (SELECT SUM(od.price) AS total_price 
+                        FROM orders AS o
                         JOIN order_detail od
-                        ON p.id = od.product_id
-                        JOIN orders o
-                        ON od.orders_id = o.id 
-                        WHERE o.status_id = ? AND YEAR(o.create_on) = ? 
-                        GROUP BY c.category
-                        ORDER BY amount DESC;
+                        ON o.id = od.orders_id
+                        WHERE o.status_id = ? AND YEAR(o.create_on) = ?
+                        GROUP BY od.orders_id) AS shadow_table;
             `
-            const [categoryResult] = await conn.query(sql, [2, parseInt(filter_year), 2, parseInt(filter_year)]);
+            const [avgTransactionResult] = await conn.query(sql, [2, parseInt(filter_year)]);
 
             conn.release();
-            return res.status(200).send(categoryResult);
+            return res.status(200).send(avgTransactionResult[0]);
+        } catch (error) {
+            conn.release();
+            console.log(error);
+            return res.status(500).send({ message: error.message || "Server error" });
+        }
+    },
+    getTotalOrders: async (req, res) => {
+        console.log("Jalan /sales/total-orders");
+        const conn = await connection.promise().getConnection();
+        const {filter_year} = req.headers;
+
+        try {
+            let sql = `
+                SELECT COUNT(id) AS total_orders FROM orders AS o
+                WHERE YEAR(o.create_on) = ?;
+            `
+            const [ordersResult] = await conn.query(sql, parseInt(filter_year));
+
+            conn.release();
+            return res.status(200).send(ordersResult[0]);
         } catch (error) {
             conn.release();
             console.log(error);
