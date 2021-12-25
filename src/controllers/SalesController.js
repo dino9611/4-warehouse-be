@@ -145,10 +145,36 @@ module.exports = {
             for (let i = 0; i < monthNames.length; i++) {
                 netSalesResult[0][monthNames[i]] = parseInt(netSalesResult[0][monthNames[i]]);
             };
-            console.log(netSalesResult)
 
             conn.release();
             return res.status(200).send(netSalesResult[0]);
+        } catch (error) {
+            conn.release();
+            console.log(error);
+            return res.status(500).send({ message: error.message || "Server error" });
+        }
+    },
+    getYearNetSales: async (req, res) => {
+        console.log("Jalan /sales/year-net-sales");
+        const conn = await connection.promise().getConnection();
+        const {filter_year} = req.headers;
+
+        try {
+            let sql = `
+                SELECT IFNULL(SUM(net_sales), 0) AS total_yearly
+                FROM (SELECT DATE_FORMAT(o.create_on, "%b") AS month, IFNULL((SUM(od.qty) * p.price) - (SUM(od.qty) * p.product_cost), 0) AS net_sales
+                    FROM product AS p
+                    JOIN order_detail od
+                    ON p.id = od.product_id
+                    JOIN orders o
+                    ON od.orders_id = o.id
+                    WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ?
+                    GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub_table;
+            `
+            const [yearNetResult] = await conn.query(sql, [5, parseInt(filter_year)]);
+
+            conn.release();
+            return res.status(200).send(yearNetResult[0]);
         } catch (error) {
             conn.release();
             console.log(error);
@@ -164,14 +190,12 @@ module.exports = {
             let sql = `
                 SELECT 
                 so.status, 
-                SUM(od.price) AS amount, 
-                ROUND(SUM(od.price) * 100 / (SELECT SUM(price) AS c FROM order_detail), 1) AS contribution 
-                FROM order_detail AS od 
-                    JOIN orders o 
-                    ON od.orders_id = o.id 
-                    JOIN status_order so 
-                    ON o.status_id = so.id 
-                    WHERE YEAR(o.create_on) = ?
+                COUNT(o.status_id) AS transaction_count, 
+                ROUND(COUNT(o.status_id) * 100 / (SELECT COUNT(status_id) AS c FROM orders), 1) AS contribution 
+                FROM orders AS o
+                    JOIN status_order so
+                    ON o.status_id = so.id
+                    WHERE YEAR(o.create_on) = ? 
                     GROUP BY status 
                     ORDER BY so.id ASC;
             `
