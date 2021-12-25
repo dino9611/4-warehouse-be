@@ -3,8 +3,6 @@ const router = express.Router();
 const { uploader, verifyPass } = require("../helpers/");
 const { connection } = require("../connection");
 const { productController } = require("./../controllers");
-const { getProdCategory, addProduct, listProduct, getDetailedProduct } =
-  productController;
 const {
   getProdCategory,
   addProduct,
@@ -12,6 +10,7 @@ const {
   editProdImg,
   deleteProdImg,
   listProduct,
+  getDetailedProduct,
   deleteProduct,
 } = productController;
 
