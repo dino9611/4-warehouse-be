@@ -256,4 +256,214 @@ module.exports = {
       return res.status(500).send({ message: error.message });
     }
   },
+
+  getAllTransactions: async (req, res) => {
+    console.log("Jalan /transaction/all-transactions");
+    const conn = await connection.promise().getConnection();
+
+    try {
+      let sql = `
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        JOIN orders o
+        ON so.id = o.status_id
+        JOIN order_detail od
+        ON o.id = od.orders_id
+        GROUP BY od.orders_id
+        ORDER BY o.id
+        LIMIT ?;
+      `
+      const [transactionsResult] = await conn.query(sql, 10);
+
+      for (let i = 0; i < transactionsResult.length; i++) {
+          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+      };
+
+      conn.release();
+      return res.status(200).send(transactionsResult);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
+  getWaitPayTransactions: async (req, res) => {
+    console.log("Jalan /transaction/wait-pay-transactions");
+    const conn = await connection.promise().getConnection();
+
+    try {
+      let sql = `
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        JOIN orders o
+        ON so.id = o.status_id
+        JOIN order_detail od
+        ON o.id = od.orders_id
+        WHERE o.status_id = ?
+        GROUP BY od.orders_id
+        ORDER BY o.id
+        LIMIT ?;
+      `
+      const [transactionsResult] = await conn.query(sql, [1, 10]);
+
+      for (let i = 0; i < transactionsResult.length; i++) {
+          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+      };
+
+      conn.release();
+      return res.status(200).send(transactionsResult);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
+  getWaitConfirmTrans: async (req, res) => {
+    console.log("Jalan /transaction/wait-confirm-transactions");
+    const conn = await connection.promise().getConnection();
+
+    try {
+      let sql = `
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        JOIN orders o
+        ON so.id = o.status_id
+        JOIN order_detail od
+        ON o.id = od.orders_id
+        WHERE o.status_id = ?
+        GROUP BY od.orders_id
+        ORDER BY o.id
+        LIMIT ?;
+      `
+      const [transactionsResult] = await conn.query(sql, [2, 10]);
+
+      for (let i = 0; i < transactionsResult.length; i++) {
+          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+      };
+
+      conn.release();
+      return res.status(200).send(transactionsResult);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
+  getOnProcessTrans: async (req, res) => {
+    console.log("Jalan /transaction/onprocess-transactions");
+    const conn = await connection.promise().getConnection();
+
+    try {
+      let sql = `
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        JOIN orders o
+        ON so.id = o.status_id
+        JOIN order_detail od
+        ON o.id = od.orders_id
+        WHERE o.status_id = ?
+        GROUP BY od.orders_id
+        ORDER BY o.id
+        LIMIT ?;
+      `
+      const [transactionsResult] = await conn.query(sql, [3, 10]);
+
+      for (let i = 0; i < transactionsResult.length; i++) {
+          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+      };
+
+      conn.release();
+      return res.status(200).send(transactionsResult);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
+  getDelivTransactions: async (req, res) => {
+    console.log("Jalan /transaction/delivery-transactions");
+    const conn = await connection.promise().getConnection();
+
+    try {
+      let sql = `
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        JOIN orders o
+        ON so.id = o.status_id
+        JOIN order_detail od
+        ON o.id = od.orders_id
+        WHERE o.status_id = ?
+        GROUP BY od.orders_id
+        ORDER BY o.id
+        LIMIT ?;
+      `
+      const [transactionsResult] = await conn.query(sql, [4, 10]);
+
+      for (let i = 0; i < transactionsResult.length; i++) {
+          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+      };
+
+      conn.release();
+      return res.status(200).send(transactionsResult);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
+  getReceivedTransactions: async (req, res) => {
+    console.log("Jalan /transaction/received-transactions");
+    const conn = await connection.promise().getConnection();
+
+    try {
+      let sql = `
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        JOIN orders o
+        ON so.id = o.status_id
+        JOIN order_detail od
+        ON o.id = od.orders_id
+        WHERE o.status_id = ?
+        GROUP BY od.orders_id
+        ORDER BY o.id
+        LIMIT ?;
+      `
+      const [transactionsResult] = await conn.query(sql, [5, 10]);
+
+      for (let i = 0; i < transactionsResult.length; i++) {
+          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+      };
+
+      conn.release();
+      return res.status(200).send(transactionsResult);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
+  getFailTransactions: async (req, res) => {
+    console.log("Jalan /transaction/fail-transactions");
+    const conn = await connection.promise().getConnection();
+
+    try {
+      let sql = `
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        JOIN orders o
+        ON so.id = o.status_id
+        JOIN order_detail od
+        ON o.id = od.orders_id
+        WHERE o.status_id = 6 OR o.status_id = 7
+        GROUP BY od.orders_id
+        ORDER BY o.id
+        LIMIT ?;
+      `
+      const [transactionsResult] = await conn.query(sql, [6, 7, 10]);
+
+      for (let i = 0; i < transactionsResult.length; i++) {
+          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+      };
+
+      conn.release();
+      return res.status(200).send(transactionsResult);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
 };
