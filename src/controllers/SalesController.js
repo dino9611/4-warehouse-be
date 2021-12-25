@@ -28,7 +28,7 @@ module.exports = {
                         WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ?
                         GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub;
             `
-            const [revenueResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+            const [revenueResult] = await conn.query(sql, [5, parseInt(filter_year)]);
 
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             for (let i = 0; i < monthNames.length; i++) {
@@ -100,7 +100,7 @@ module.exports = {
                     WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ?
                     GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub;
             `
-            const [revenueResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+            const [revenueResult] = await conn.query(sql, [5, parseInt(filter_year)]);
 
             conn.release();
             return res.status(200).send(revenueResult[0]);
@@ -139,7 +139,7 @@ module.exports = {
                         WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ?
                         GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub_table;
             `
-            const [netSalesResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+            const [netSalesResult] = await conn.query(sql, [5, parseInt(filter_year)]);
 
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             for (let i = 0; i < monthNames.length; i++) {
@@ -202,7 +202,7 @@ module.exports = {
                 ORDER BY qty_sold DESC
                 LIMIT 5;
             `
-            const [topProdResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+            const [topProdResult] = await conn.query(sql, [5, parseInt(filter_year)]);
 
             conn.release();
             return res.status(200).send(topProdResult);
@@ -229,7 +229,7 @@ module.exports = {
                 ORDER BY sales_value DESC
                 LIMIT 5;
             `
-            const [topProdResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+            const [topProdResult] = await conn.query(sql, [5, parseInt(filter_year)]);
 
             conn.release();
             return res.status(200).send(topProdResult);
@@ -264,7 +264,7 @@ module.exports = {
                         GROUP BY c.category
                         ORDER BY amount DESC;
             `
-            const [categoryResult] = await conn.query(sql, [2, parseInt(filter_year), 2, parseInt(filter_year)]);
+            const [categoryResult] = await conn.query(sql, [5, parseInt(filter_year), 5, parseInt(filter_year)]);
 
             conn.release();
             return res.status(200).send(categoryResult);
@@ -286,7 +286,7 @@ module.exports = {
                 ON od.orders_id = o.id
                 WHERE status_id = ? AND YEAR(o.create_on) = ?;
             `
-            const [usersResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+            const [usersResult] = await conn.query(sql, [5, parseInt(filter_year)]);
 
             conn.release();
             return res.status(200).send(usersResult[0]);
@@ -313,7 +313,7 @@ module.exports = {
                 ORDER BY total_transaction_value DESC
                 LIMIT 5;
             `
-            const [topProdResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+            const [topProdResult] = await conn.query(sql, [5, parseInt(filter_year)]);
 
             conn.release();
             return res.status(200).send(topProdResult);
@@ -357,7 +357,7 @@ module.exports = {
                         WHERE o.status_id = ? AND YEAR(o.create_on) = ?
                         GROUP BY od.orders_id) AS shadow_table;
             `
-            const [avgTransactionResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+            const [avgTransactionResult] = await conn.query(sql, [5, parseInt(filter_year)]);
 
             conn.release();
             return res.status(200).send(avgTransactionResult[0]);
