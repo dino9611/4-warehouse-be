@@ -117,14 +117,35 @@ module.exports = {
 
         try {
             let sql = `
-                SELECT IFNULL((SUM(od.qty) * p.price) - (SUM(od.qty) * p.product_cost), 0) AS net_sales FROM product AS p 
-                JOIN order_detail od
-                ON p.id = od.product_id
-                JOIN orders o
-                ON od.orders_id = o.id
-                WHERE o.status_id = ? AND YEAR(o.create_on) = ?;
+                SELECT 
+                SUM(IF(month = 'Jan', net_sales, 0)) AS 'January',
+                SUM(IF(month = 'Feb', net_sales, 0)) AS 'February',
+                SUM(IF(month = 'Mar', net_sales, 0)) AS 'March',
+                SUM(IF(month = 'Apr', net_sales, 0)) AS 'April',
+                SUM(IF(month = 'May', net_sales, 0)) AS 'May',
+                SUM(IF(month = 'Jun', net_sales, 0)) AS 'June',
+                SUM(IF(month = 'Jul', net_sales, 0)) AS 'July',
+                SUM(IF(month = 'Aug', net_sales, 0)) AS 'August',
+                SUM(IF(month = 'Sep', net_sales, 0)) AS 'September',
+                SUM(IF(month = 'Oct', net_sales, 0)) AS 'October',
+                SUM(IF(month = 'Nov', net_sales, 0)) AS 'November',
+                SUM(IF(month = 'Dec', net_sales, 0)) AS 'December'
+                    FROM (SELECT DATE_FORMAT(o.create_on, "%b") AS month, IFNULL((SUM(od.qty) * p.price) - (SUM(od.qty) * p.product_cost), 0) AS net_sales
+                        FROM product AS p
+                        JOIN order_detail od
+                        ON p.id = od.product_id
+                        JOIN orders o
+                        ON od.orders_id = o.id
+                        WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ?
+                        GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub_table;
             `
             const [netSalesResult] = await conn.query(sql, [2, parseInt(filter_year)]);
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            for (let i = 0; i < monthNames.length; i++) {
+                netSalesResult[0][monthNames[i]] = parseInt(netSalesResult[0][monthNames[i]]);
+            };
+            console.log(netSalesResult)
 
             conn.release();
             return res.status(200).send(netSalesResult[0]);
