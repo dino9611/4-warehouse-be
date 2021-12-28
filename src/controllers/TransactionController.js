@@ -330,11 +330,13 @@ module.exports = {
 
     try {
       let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
         JOIN orders o
         ON so.id = o.status_id
         JOIN order_detail od
         ON o.id = od.orders_id
+        JOIN warehouse w
+        ON o.warehouse_id = w.id
         WHERE o.status_id = ?
         GROUP BY od.orders_id
         ORDER BY o.id
@@ -344,6 +346,7 @@ module.exports = {
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
       };
 
       conn.release();
@@ -360,11 +363,13 @@ module.exports = {
 
     try {
       let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
         JOIN orders o
         ON so.id = o.status_id
         JOIN order_detail od
         ON o.id = od.orders_id
+        JOIN warehouse w
+        ON o.warehouse_id = w.id
         WHERE o.status_id = ?
         GROUP BY od.orders_id
         ORDER BY o.id
@@ -374,6 +379,7 @@ module.exports = {
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
       };
 
       conn.release();
@@ -390,11 +396,13 @@ module.exports = {
 
     try {
       let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
         JOIN orders o
         ON so.id = o.status_id
         JOIN order_detail od
         ON o.id = od.orders_id
+        JOIN warehouse w
+        ON o.warehouse_id = w.id
         WHERE o.status_id = ?
         GROUP BY od.orders_id
         ORDER BY o.id
@@ -404,6 +412,7 @@ module.exports = {
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
       };
 
       conn.release();
@@ -420,11 +429,13 @@ module.exports = {
 
     try {
       let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
         JOIN orders o
         ON so.id = o.status_id
         JOIN order_detail od
         ON o.id = od.orders_id
+        JOIN warehouse w
+        ON o.warehouse_id = w.id
         WHERE o.status_id = ?
         GROUP BY od.orders_id
         ORDER BY o.id
@@ -434,6 +445,7 @@ module.exports = {
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
       };
 
       conn.release();
@@ -450,11 +462,13 @@ module.exports = {
 
     try {
       let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, o.create_on AS transaction_date FROM status_order AS so
+        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
         JOIN orders o
         ON so.id = o.status_id
         JOIN order_detail od
         ON o.id = od.orders_id
+        JOIN warehouse w
+        ON o.warehouse_id = w.id
         WHERE o.status_id = 6 OR o.status_id = 7
         GROUP BY od.orders_id
         ORDER BY o.id
@@ -464,6 +478,7 @@ module.exports = {
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
+          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
       };
 
       conn.release();
