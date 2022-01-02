@@ -261,7 +261,7 @@ module.exports = {
     console.log("Jalan /transaction/all-transactions");
     const conn = await connection.promise().getConnection();
     const { page, limit } = req.query; // Dari frontend
-    let offset = page * limit; // Semacam utk slice data, start data drimana
+    let offset = page * limit; // Utk slice data, start data drimana
 
     try {
       let sql = `
@@ -301,6 +301,8 @@ module.exports = {
   getWaitPayTransactions: async (req, res) => {
     console.log("Jalan /transaction/wait-pay-transactions");
     const conn = await connection.promise().getConnection();
+    const { page, limit } = req.query; // Dari frontend
+    let offset = page * limit; // Utk slice data, start data drimana
 
     try {
       let sql = `
@@ -313,15 +315,27 @@ module.exports = {
         ON o.warehouse_id = w.id
         WHERE o.status_id = ?
         GROUP BY od.orders_id
-        ORDER BY o.id
-        LIMIT ?;
+        ORDER BY transaction_date DESC
+        LIMIT ? OFFSET ?;
       `
-      const [transactionsResult] = await conn.query(sql, [1, 10]);
+      const [transactionsResult] = await conn.query(sql, [1, parseInt(limit), parseInt(offset)]);
+
+      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
           transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
+          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
+
+      sql = `
+        SELECT COUNT(o.id) AS orders_total FROM orders AS o
+        JOIN status_order so
+        ON o.status_id = so.id
+        WHERE o.status_id = ?;
+      `;
+      let [ordersTotal] = await conn.query(sql, 1);
+      res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
@@ -334,6 +348,8 @@ module.exports = {
   getWaitConfirmTrans: async (req, res) => {
     console.log("Jalan /transaction/wait-confirm-transactions");
     const conn = await connection.promise().getConnection();
+    const { page, limit } = req.query; // Dari frontend
+    let offset = page * limit; // Utk slice data, start data drimana
 
     try {
       let sql = `
@@ -346,15 +362,27 @@ module.exports = {
         ON o.warehouse_id = w.id
         WHERE o.status_id = ?
         GROUP BY od.orders_id
-        ORDER BY o.id
-        LIMIT ?;
+        ORDER BY transaction_date DESC
+        LIMIT ? OFFSET ?;
       `
-      const [transactionsResult] = await conn.query(sql, [2, 10]);
+      const [transactionsResult] = await conn.query(sql, [2, parseInt(limit), parseInt(offset)]);
+
+      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
           transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
+          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
+
+      sql = `
+        SELECT COUNT(o.id) AS orders_total FROM orders AS o
+        JOIN status_order so
+        ON o.status_id = so.id
+        WHERE o.status_id = ?;
+      `;
+      let [ordersTotal] = await conn.query(sql, 2);
+      res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
@@ -367,6 +395,8 @@ module.exports = {
   getOnProcessTrans: async (req, res) => {
     console.log("Jalan /transaction/onprocess-transactions");
     const conn = await connection.promise().getConnection();
+    const { page, limit } = req.query; // Dari frontend
+    let offset = page * limit; // Utk slice data, start data drimana
 
     try {
       let sql = `
@@ -379,15 +409,27 @@ module.exports = {
         ON o.warehouse_id = w.id
         WHERE o.status_id = ?
         GROUP BY od.orders_id
-        ORDER BY o.id
-        LIMIT ?;
+        ORDER BY transaction_date DESC
+        LIMIT ? OFFSET ?;
       `
-      const [transactionsResult] = await conn.query(sql, [3, 10]);
+      const [transactionsResult] = await conn.query(sql, [3, parseInt(limit), parseInt(offset)]);
+
+      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
           transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
+          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
+
+      sql = `
+        SELECT COUNT(o.id) AS orders_total FROM orders AS o
+        JOIN status_order so
+        ON o.status_id = so.id
+        WHERE o.status_id = ?;
+      `;
+      let [ordersTotal] = await conn.query(sql, 3);
+      res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
@@ -400,6 +442,8 @@ module.exports = {
   getDelivTransactions: async (req, res) => {
     console.log("Jalan /transaction/delivery-transactions");
     const conn = await connection.promise().getConnection();
+    const { page, limit } = req.query; // Dari frontend
+    let offset = page * limit; // Utk slice data, start data drimana
 
     try {
       let sql = `
@@ -412,15 +456,27 @@ module.exports = {
         ON o.warehouse_id = w.id
         WHERE o.status_id = ?
         GROUP BY od.orders_id
-        ORDER BY o.id
-        LIMIT ?;
+        ORDER BY transaction_date DESC
+        LIMIT ? OFFSET ?;
       `
-      const [transactionsResult] = await conn.query(sql, [4, 10]);
+      const [transactionsResult] = await conn.query(sql, [4, parseInt(limit), parseInt(offset)]);
+
+      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
           transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
+          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
+
+      sql = `
+        SELECT COUNT(o.id) AS orders_total FROM orders AS o
+        JOIN status_order so
+        ON o.status_id = so.id
+        WHERE o.status_id = ?;
+      `;
+      let [ordersTotal] = await conn.query(sql, 4);
+      res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
@@ -433,6 +489,8 @@ module.exports = {
   getReceivedTransactions: async (req, res) => {
     console.log("Jalan /transaction/received-transactions");
     const conn = await connection.promise().getConnection();
+    const { page, limit } = req.query; // Dari frontend
+    let offset = page * limit; // Utk slice data, start data drimana
 
     try {
       let sql = `
@@ -445,15 +503,27 @@ module.exports = {
         ON o.warehouse_id = w.id
         WHERE o.status_id = ?
         GROUP BY od.orders_id
-        ORDER BY o.id
-        LIMIT ?;
+        ORDER BY transaction_date DESC
+        LIMIT ? OFFSET ?;
       `
-      const [transactionsResult] = await conn.query(sql, [5, 10]);
+      const [transactionsResult] = await conn.query(sql, [5, parseInt(limit), parseInt(offset)]);
+
+      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
           transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
+          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
+
+      sql = `
+        SELECT COUNT(o.id) AS orders_total FROM orders AS o
+        JOIN status_order so
+        ON o.status_id = so.id
+        WHERE o.status_id = ?;
+      `;
+      let [ordersTotal] = await conn.query(sql, 5);
+      res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
@@ -466,6 +536,8 @@ module.exports = {
   getFailTransactions: async (req, res) => {
     console.log("Jalan /transaction/fail-transactions");
     const conn = await connection.promise().getConnection();
+    const { page, limit } = req.query; // Dari frontend
+    let offset = page * limit; // Utk slice data, start data drimana
 
     try {
       let sql = `
@@ -476,17 +548,29 @@ module.exports = {
         ON o.id = od.orders_id
         JOIN warehouse w
         ON o.warehouse_id = w.id
-        WHERE o.status_id = 6 OR o.status_id = 7
+        WHERE o.status_id = ? OR o.status_id = ?
         GROUP BY od.orders_id
-        ORDER BY o.id
-        LIMIT ?;
+        ORDER BY transaction_date DESC
+        LIMIT ? OFFSET ?;
       `
-      const [transactionsResult] = await conn.query(sql, [6, 7, 10]);
+      const [transactionsResult] = await conn.query(sql, [6, 7, parseInt(limit), parseInt(offset)]);
+
+      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
           transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
+          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
+
+      sql = `
+        SELECT COUNT(o.id) AS orders_total FROM orders AS o
+        JOIN status_order so
+        ON o.status_id = so.id
+        WHERE o.status_id = ? AND o.status_id = ?;
+      `;
+      let [ordersTotal] = await conn.query(sql, [6, 7]);
+      res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
