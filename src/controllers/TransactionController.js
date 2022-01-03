@@ -632,4 +632,52 @@ module.exports = {
           return res.status(500).send({ message: error.message || "Server error" });
       }
   },
+  confirmTransactionPay: async (req, res) => {
+    console.log("Jalan /transaction/confirm-payment");
+    const conn = await connection.promise().getConnection();
+    const { transactionId } = req.params; // Dari frontend
+
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+
+      let sql = `
+        UPDATE orders SET status_id = ?
+        WHERE id = ?;
+      `
+      const [transactionResult] = await conn.query(sql, [3, parseInt(transactionId)]);
+
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      return res.status(200).send({ message: "Transaction accepted" });
+      } catch (error) {
+          await conn.rollback(); // Rollback data klo terjadi error/gagal
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
+  confirmTransactionDelivery: async (req, res) => {
+    console.log("Jalan /transaction/confirm-delivery");
+    const conn = await connection.promise().getConnection();
+    const { transactionId } = req.params; // Dari frontend
+
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+
+      let sql = `
+        UPDATE orders SET status_id = ?
+        WHERE id = ?;
+      `
+      const [transactionResult] = await conn.query(sql, [4, parseInt(transactionId)]);
+
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      return res.status(200).send({ message: "Transaction accepted" });
+      } catch (error) {
+          await conn.rollback(); // Rollback data klo terjadi error/gagal
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
 };
