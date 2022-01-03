@@ -567,7 +567,7 @@ module.exports = {
         SELECT COUNT(o.id) AS orders_total FROM orders AS o
         JOIN status_order so
         ON o.status_id = so.id
-        WHERE o.status_id = ? AND o.status_id = ?;
+        WHERE o.status_id = ? OR o.status_id = ?;
       `;
       let [ordersTotal] = await conn.query(sql, [6, 7]);
       res.set("x-total-count", ordersTotal[0].orders_total);
