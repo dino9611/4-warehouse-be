@@ -580,4 +580,56 @@ module.exports = {
           return res.status(500).send({ message: error.message || "Server error" });
       }
   },
+  getTransactionDetail: async (req, res) => {
+    console.log("Jalan /transaction/detail");
+    const conn = await connection.promise().getConnection();
+    const { id } = req.query; // Dari frontend
+
+    try {
+      let sql = `
+        SELECT o.id AS order_id, od.product_id, p.name AS product_name, od.qty, p.price AS product_price, od.qty * p.price AS total_price FROM status_order AS so
+        JOIN orders o
+        ON so.id = o.status_id
+        JOIN order_detail od
+        ON o.id = od.orders_id
+        JOIN product p
+        ON od.product_id = p.id
+        WHERE o.id = ?;
+      `
+      const [transactionDetailResult] = await conn.query(sql, parseInt(id));
+
+      conn.release();
+      return res.status(200).send(transactionDetailResult);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
+  getShippingInfo: async (req, res) => {
+    console.log("Jalan /transaction/detail-shipping");
+    const conn = await connection.promise().getConnection();
+    const { id } = req.query; // Dari frontend
+
+    try {
+      let sql = `
+        SELECT a.recipient, a.address, a.phone_number, u.email, b.name AS bank_name, b.account_number, o.courier FROM bank AS b
+        JOIN orders o
+        ON b.id = o.bank_id
+        JOIN user u
+        ON o.user_id = u.id
+        JOIN address a
+        ON u.id = a.user_id
+        WHERE o.id = ? AND a.is_main_address = ?;
+      `
+      const [shippingInfoResult] = await conn.query(sql, [parseInt(id), 1]);
+
+      conn.release();
+      return res.status(200).send(shippingInfoResult[0]);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
 };
