@@ -19,7 +19,8 @@ const {
   getTransactionDetail,
   getShippingInfo,
   confirmTransactionPay,
-  confirmTransactionDelivery
+  confirmTransactionDelivery,
+  getTransactionStatuses
 } = transactionController;
 
 router.post("/addtocart", addToCart);
@@ -40,5 +41,6 @@ router.get("/detail", getTransactionDetail);
 router.get("/detail-shipping", getShippingInfo);
 router.patch("/confirm-payment/:transactionId", confirmTransactionPay);
 router.patch("/confirm-delivery/:transactionId", confirmTransactionDelivery);
+router.get("/statuses", getTransactionStatuses);
 
 module.exports = router;

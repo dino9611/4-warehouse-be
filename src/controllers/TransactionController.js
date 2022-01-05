@@ -686,4 +686,21 @@ module.exports = {
           return res.status(500).send({ message: error.message || "Server error" });
       }
   },
+  getTransactionStatuses: async (req, res) => {
+    console.log("Jalan /transaction/statuses");
+    const conn = await connection.promise().getConnection();
+
+    try {
+      let sql = `SELECT id, status FROM status_order;`
+
+      const [statusesResult] = await conn.query(sql);
+
+      conn.release();
+      return res.status(200).send(statusesResult);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
 };
