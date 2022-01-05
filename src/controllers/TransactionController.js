@@ -587,7 +587,7 @@ module.exports = {
 
     try {
       let sql = `
-        SELECT o.id AS order_id, od.product_id, p.name AS product_name, od.qty, IFNULL(st.total_stock, 0) AS total_stock, IF(st.total_stock >= od.qty, "Sufficient", "Insufficient") AS stock_status, p.price AS product_price, od.qty * p.price AS total_price FROM status_order AS so
+        SELECT o.id AS order_id, o.status_id, od.product_id, p.name AS product_name, od.qty, IFNULL(st.total_stock, 0) AS total_stock, IF(st.total_stock >= od.qty, "Sufficient", "Insufficient") AS stock_status, p.price AS product_price, od.qty * p.price AS total_price FROM status_order AS so
         JOIN orders o
         ON so.id = o.status_id
         JOIN order_detail od
@@ -595,14 +595,14 @@ module.exports = {
         JOIN product p
         ON od.product_id = p.id
         LEFT JOIN (SELECT product_id, IFNULL(SUM(stock), 0) AS total_stock FROM stock 
-        WHERE warehouse_id = ?
+        WHERE warehouse_id = ? AND ready_to_sent = ?
         GROUP BY product_id) AS st
         ON st.product_id = od.product_id
         WHERE o.id = ?
         GROUP BY od.product_id
         ORDER BY od.product_id;
       `
-      const [transactionDetailResult] = await conn.query(sql, [parseInt(whid), parseInt(id)]);
+      const [transactionDetailResult] = await conn.query(sql, [parseInt(whid), 0, parseInt(id)]);
 
       conn.release();
       return res.status(200).send(transactionDetailResult);
