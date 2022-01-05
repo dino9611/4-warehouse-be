@@ -587,7 +587,7 @@ module.exports = {
 
     try {
       let sql = `
-        SELECT o.id AS order_id, od.product_id, p.name AS product_name, od.qty, IFNULL(st.total_stock, 0) AS total_stock, IF(st.total_stock >= od.qty, "Sufficient", "Insufficient") AS stock_status, p.price AS product_price, od.qty * p.price AS total_price FROM status_order AS so
+        SELECT o.id AS order_id, od.product_id, p.name AS product_name, od.qty, IF(IFNULL(st.total_stock, 0) AS total_stock, IF(st.total_stock >= od.qty, "Sufficient", "Insufficient") AS stock_status, p.price AS product_price, od.qty * p.price AS total_price FROM status_order AS so
         JOIN orders o
         ON so.id = o.status_id
         JOIN order_detail od
