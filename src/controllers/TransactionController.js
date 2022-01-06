@@ -799,7 +799,7 @@ module.exports = {
         `;
         queryParameter = [6, 7, parseInt(whid)];
       };
-      
+
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
@@ -873,6 +873,7 @@ module.exports = {
     console.log("Jalan /transaction/confirm-payment");
     const conn = await connection.promise().getConnection();
     const { transactionId } = req.params; // Dari frontend
+    const { actionIdentifier } = req.body; // Dari frontend
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
@@ -881,11 +882,18 @@ module.exports = {
         UPDATE orders SET status_id = ?
         WHERE id = ?;
       `
-      const [transactionResult] = await conn.query(sql, [3, parseInt(transactionId)]);
+
+      let statusIdParams;
+      (actionIdentifier === 1) ? statusIdParams = 3 : statusIdParams = 6;
+
+      await conn.query(sql, [statusIdParams, parseInt(transactionId)]);
+
+      let responseMessage = "";
+      (actionIdentifier === 1) ? responseMessage = "Transaction accepted" : responseMessage = "Transaction rejected";
 
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
-      return res.status(200).send({ message: "Transaction accepted" });
+      return res.status(200).send({ message: responseMessage });
       } catch (error) {
           await conn.rollback(); // Rollback data klo terjadi error/gagal
           conn.release();
@@ -928,6 +936,24 @@ module.exports = {
 
       conn.release();
       return res.status(200).send(statusesResult);
+      } catch (error) {
+          conn.release();
+          console.log(error);
+          return res.status(500).send({ message: error.message || "Server error" });
+      }
+  },
+  getPaymentProof: async (req, res) => {
+    console.log("Jalan /transaction/payment-proof");
+    const conn = await connection.promise().getConnection();
+    const { orderId } = req.params; // Dari frontend
+
+    try {
+      let sql = `SELECT payment_proof FROM orders WHERE id = ?;`
+
+      const [payProofResult] = await conn.query(sql, orderId);
+
+      conn.release();
+      return res.status(200).send(payProofResult[0].payment_proof);
       } catch (error) {
           conn.release();
           console.log(error);

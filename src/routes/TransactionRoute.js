@@ -20,7 +20,8 @@ const {
   getShippingInfo,
   confirmTransactionPay,
   confirmTransactionDelivery,
-  getTransactionStatuses
+  getTransactionStatuses,
+  getPaymentProof
 } = transactionController;
 
 router.post("/addtocart", addToCart);
@@ -42,5 +43,6 @@ router.get("/detail-shipping", getShippingInfo);
 router.patch("/confirm-payment/:transactionId", confirmTransactionPay);
 router.patch("/confirm-delivery/:transactionId", confirmTransactionDelivery);
 router.get("/statuses", getTransactionStatuses);
+router.get("/payment-proof/:orderId", getPaymentProof);
 
 module.exports = router;
