@@ -262,12 +262,13 @@ module.exports = {
     const conn = await connection.promise().getConnection();
     const { page, limit, roleid, whid } = req.query; // Dari frontend
     let offset = page * limit; // Utk slice data, start data drimana
+    console.log(roleid)
 
     try {
       let sql;
       let queryParameter = [];
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
@@ -308,7 +309,7 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `SELECT COUNT(id) AS orders_total FROM orders;`;
       } else {
         sql = `SELECT COUNT(id) AS orders_total FROM orders WHERE warehouse_id = ${whid};`;
@@ -335,7 +336,7 @@ module.exports = {
       let sql;
       let queryParameter = [];
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
@@ -377,7 +378,7 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT COUNT(o.id) AS orders_total FROM orders AS o
           JOIN status_order so
@@ -416,7 +417,7 @@ module.exports = {
       let sql;
       let queryParameter = [];
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
@@ -458,7 +459,7 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT COUNT(o.id) AS orders_total FROM orders AS o
           JOIN status_order so
@@ -497,7 +498,7 @@ module.exports = {
       let sql;
       let queryParameter = [];
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
@@ -539,7 +540,7 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT COUNT(o.id) AS orders_total FROM orders AS o
           JOIN status_order so
@@ -578,7 +579,7 @@ module.exports = {
       let sql;
       let queryParameter = [];
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
@@ -620,7 +621,7 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT COUNT(o.id) AS orders_total FROM orders AS o
           JOIN status_order so
@@ -659,7 +660,7 @@ module.exports = {
       let sql;
       let queryParameter = [];
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
@@ -701,7 +702,7 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT COUNT(o.id) AS orders_total FROM orders AS o
           JOIN status_order so
@@ -740,7 +741,7 @@ module.exports = {
       let sql;
       let queryParameter = [];
       
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
@@ -782,7 +783,7 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      if (roleid === 1) {
+      if (parseInt(roleid) === 1) {
         sql = `
           SELECT COUNT(o.id) AS orders_total FROM orders AS o
           JOIN status_order so
