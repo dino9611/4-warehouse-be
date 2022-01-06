@@ -262,7 +262,6 @@ module.exports = {
     const conn = await connection.promise().getConnection();
     const { page, limit, roleid, whid } = req.query; // Dari frontend
     let offset = page * limit; // Utk slice data, start data drimana
-    console.log(roleid)
 
     try {
       let sql;
