@@ -904,20 +904,71 @@ module.exports = {
   confirmTransactionDelivery: async (req, res) => {
     console.log("Jalan /transaction/confirm-delivery");
     const conn = await connection.promise().getConnection();
-    const { transactionId } = req.params; // Dari frontend
+    const { actionIdentifier, warehouseId, orderId } = req.body; // Dari frontend
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+      let sql;
 
-      let sql = `
-        UPDATE orders SET status_id = ?
-        WHERE id = ?;
-      `
-      const [transactionResult] = await conn.query(sql, [4, parseInt(transactionId)]);
+      if (actionIdentifier === 1) { // ? Bila warehouse admin pada frontend klik button "Send"
+        sql = `
+          SELECT o.id AS order_id, od.product_id, od.qty, IFNULL(st.total_stock, 0) AS total_stock, IF(st.total_stock >= od.qty, "Sufficient", "Insufficient") AS stock_status FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN product p
+          ON od.product_id = p.id
+          LEFT JOIN (SELECT product_id, IFNULL(SUM(stock), 0) AS total_stock FROM stock 
+          WHERE warehouse_id = ? AND ready_to_sent = ?
+          GROUP BY product_id) AS st
+          ON st.product_id = od.product_id
+          WHERE o.id = ?
+          GROUP BY od.product_id
+          ORDER BY od.product_id;
+        `;
+        
+        const [validationResult] = await conn.query(sql, [parseInt(warehouseId), 0, parseInt(orderId)]);
 
-      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
-      conn.release();
-      return res.status(200).send({ message: "Transaction accepted" });
+        const isAllSufficient = (currentValue) => currentValue.qty <  currentValue.total_stock;
+        const stockCheck = validationResult.every(isAllSufficient);
+        // ! Digunakan utk validasi ulang stok stlh klik button "Send", apakah stok cukup/tidak, dikhawatirkan terjadi perubahan stok real-time saat klik button
+
+        if (stockCheck) { // * Bila validasi cek stok = true (stok pesanan masih mencukupi)
+          sql = `
+            UPDATE orders SET status_id = ?
+            WHERE id = ?;
+          `;
+
+          await conn.query(sql, [4, parseInt(orderId)]);
+
+          sql = `
+            UPDATE stock SET ready_to_sent = ?
+            WHERE orders_id = ?;
+          `; // * Utk membuat akumulasi stok berkurang setelah ready_to_send ganti ke 0, karena barang sudah dikirim
+
+          await conn.query(sql, [0, parseInt(orderId)]);
+
+          await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+          conn.release();
+          return res.status(200).send({ message: `Yeay! Order #${orderId} otw to customer` });
+        } else { // * Bila validasi cek stok = false (stok pesanan tidak mencukupi)
+          await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+          conn.release();
+          return res.status(200).send({ message: `Stock change occurred during confirmation, please re-check stock/request stock` });
+        };
+      } else { // ? Bila warehouse admin pada frontend klik button "Reject"
+        sql = `
+          UPDATE orders SET status_id = ?
+          WHERE id = ?;
+        `;
+
+        await conn.query(sql, [6, parseInt(orderId)]);
+
+        await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+        conn.release();
+        return res.status(200).send({ message: "Transaction rejected" });
+      };
       } catch (error) {
           await conn.rollback(); // Rollback data klo terjadi error/gagal
           conn.release();
