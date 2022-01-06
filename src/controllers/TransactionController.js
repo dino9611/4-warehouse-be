@@ -260,23 +260,45 @@ module.exports = {
   getAllTransactions: async (req, res) => {
     console.log("Jalan /transaction/all-transactions");
     const conn = await connection.promise().getConnection();
-    const { page, limit } = req.query; // Dari frontend
+    const { page, limit, roleid, whid } = req.query; // Dari frontend
     let offset = page * limit; // Utk slice data, start data drimana
 
     try {
-      let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
-        JOIN orders o
-        ON so.id = o.status_id
-        JOIN order_detail od
-        ON o.id = od.orders_id
-        JOIN warehouse w
-        ON o.warehouse_id = w.id
-        GROUP BY od.orders_id
-        ORDER BY transaction_date DESC
-        LIMIT ? OFFSET ?;
-      `
-      const [transactionsResult] = await conn.query(sql, [parseInt(limit), parseInt(offset)]);
+      let sql;
+      let queryParameter = [];
+
+      if (roleid === 1) {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [parseInt(limit), parseInt(offset)];
+      } else {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.warehouse_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [parseInt(whid), parseInt(limit), parseInt(offset)];
+      };
+
+      const [transactionsResult] = await conn.query(sql, queryParameter);
 
       const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
@@ -286,7 +308,12 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      sql = `SELECT COUNT(id) AS orders_total FROM orders;`;
+      if (roleid === 1) {
+        sql = `SELECT COUNT(id) AS orders_total FROM orders;`;
+      } else {
+        sql = `SELECT COUNT(id) AS orders_total FROM orders WHERE warehouse_id = ${whid};`;
+      };
+
       let [ordersTotal] = await conn.query(sql);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
@@ -301,24 +328,46 @@ module.exports = {
   getWaitPayTransactions: async (req, res) => {
     console.log("Jalan /transaction/wait-pay-transactions");
     const conn = await connection.promise().getConnection();
-    const { page, limit } = req.query; // Dari frontend
+    const { page, limit, roleid, whid } = req.query; // Dari frontend
     let offset = page * limit; // Utk slice data, start data drimana
 
     try {
-      let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
-        JOIN orders o
-        ON so.id = o.status_id
-        JOIN order_detail od
-        ON o.id = od.orders_id
-        JOIN warehouse w
-        ON o.warehouse_id = w.id
-        WHERE o.status_id = ?
-        GROUP BY od.orders_id
-        ORDER BY transaction_date DESC
-        LIMIT ? OFFSET ?;
-      `
-      const [transactionsResult] = await conn.query(sql, [1, parseInt(limit), parseInt(offset)]);
+      let sql;
+      let queryParameter = [];
+
+      if (roleid === 1) {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [1, parseInt(limit), parseInt(offset)];
+      } else {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ? AND o.warehouse_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [1, parseInt(whid), parseInt(limit), parseInt(offset)];
+      };
+
+      const [transactionsResult] = await conn.query(sql, queryParameter);
 
       const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
@@ -328,13 +377,25 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      sql = `
-        SELECT COUNT(o.id) AS orders_total FROM orders AS o
-        JOIN status_order so
-        ON o.status_id = so.id
-        WHERE o.status_id = ?;
-      `;
-      let [ordersTotal] = await conn.query(sql, 1);
+      if (roleid === 1) {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ?;
+        `;
+        queryParameter = [1];
+      } else {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ? AND o.warehouse_id = ?;
+        `;
+        queryParameter = [1, parseInt(whid)];
+      };
+
+      let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
@@ -348,40 +409,74 @@ module.exports = {
   getWaitConfirmTrans: async (req, res) => {
     console.log("Jalan /transaction/wait-confirm-transactions");
     const conn = await connection.promise().getConnection();
-    const { page, limit } = req.query; // Dari frontend
+    const { page, limit, roleid, whid } = req.query; // Dari frontend
     let offset = page * limit; // Utk slice data, start data drimana
 
     try {
-      let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
-        JOIN orders o
-        ON so.id = o.status_id
-        JOIN order_detail od
-        ON o.id = od.orders_id
-        JOIN warehouse w
-        ON o.warehouse_id = w.id
-        WHERE o.status_id = ?
-        GROUP BY od.orders_id
-        ORDER BY transaction_date DESC
-        LIMIT ? OFFSET ?;
-      `
-      const [transactionsResult] = await conn.query(sql, [2, parseInt(limit), parseInt(offset)]);
+      let sql;
+      let queryParameter = [];
+
+      if (roleid === 1) {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [2, parseInt(limit), parseInt(offset)];
+      } else {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ? AND o.warehouse_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [2, parseInt(whid), parseInt(limit), parseInt(offset)];
+      };
+
+      const [transactionsResult] = await conn.query(sql, queryParameter);
 
       const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "false"};
-      // console.log("1", transactionsResult);
+
       for (let i = 0; i < transactionsResult.length; i++) {
           transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
           transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
-      // console.log("2", transactionsResult);
-      sql = `
-        SELECT COUNT(o.id) AS orders_total FROM orders AS o
-        JOIN status_order so
-        ON o.status_id = so.id
-        WHERE o.status_id = ?;
-      `;
-      let [ordersTotal] = await conn.query(sql, 2);
+
+      if (roleid === 1) {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ?;
+        `;
+        queryParameter = [2];
+      } else {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ? AND o.warehouse_id = ?;
+        `;
+        queryParameter = [2, parseInt(whid)];
+      };
+
+      let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
@@ -395,24 +490,46 @@ module.exports = {
   getOnProcessTrans: async (req, res) => {
     console.log("Jalan /transaction/onprocess-transactions");
     const conn = await connection.promise().getConnection();
-    const { page, limit } = req.query; // Dari frontend
+    const { page, limit, roleid, whid } = req.query; // Dari frontend
     let offset = page * limit; // Utk slice data, start data drimana
 
     try {
-      let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
-        JOIN orders o
-        ON so.id = o.status_id
-        JOIN order_detail od
-        ON o.id = od.orders_id
-        JOIN warehouse w
-        ON o.warehouse_id = w.id
-        WHERE o.status_id = ?
-        GROUP BY od.orders_id
-        ORDER BY transaction_date DESC
-        LIMIT ? OFFSET ?;
-      `
-      const [transactionsResult] = await conn.query(sql, [3, parseInt(limit), parseInt(offset)]);
+      let sql;
+      let queryParameter = [];
+
+      if (roleid === 1) {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [3, parseInt(limit), parseInt(offset)];
+      } else {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ? AND o.warehouse_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [3, parseInt(whid), parseInt(limit), parseInt(offset)];
+      };
+
+      const [transactionsResult] = await conn.query(sql, queryParameter);
 
       const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
@@ -422,13 +539,25 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      sql = `
-        SELECT COUNT(o.id) AS orders_total FROM orders AS o
-        JOIN status_order so
-        ON o.status_id = so.id
-        WHERE o.status_id = ?;
-      `;
-      let [ordersTotal] = await conn.query(sql, 3);
+      if (roleid === 1) {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ?;
+        `;
+        queryParameter = [3];
+      } else {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ? AND o.warehouse_id = ?;
+        `;
+        queryParameter = [3, parseInt(whid)];
+      };
+
+      let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
@@ -442,24 +571,46 @@ module.exports = {
   getDelivTransactions: async (req, res) => {
     console.log("Jalan /transaction/delivery-transactions");
     const conn = await connection.promise().getConnection();
-    const { page, limit } = req.query; // Dari frontend
+    const { page, limit, roleid, whid } = req.query; // Dari frontend
     let offset = page * limit; // Utk slice data, start data drimana
 
     try {
-      let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
-        JOIN orders o
-        ON so.id = o.status_id
-        JOIN order_detail od
-        ON o.id = od.orders_id
-        JOIN warehouse w
-        ON o.warehouse_id = w.id
-        WHERE o.status_id = ?
-        GROUP BY od.orders_id
-        ORDER BY transaction_date DESC
-        LIMIT ? OFFSET ?;
-      `
-      const [transactionsResult] = await conn.query(sql, [4, parseInt(limit), parseInt(offset)]);
+      let sql;
+      let queryParameter = [];
+
+      if (roleid === 1) {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [4, parseInt(limit), parseInt(offset)];
+      } else {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ? AND o.warehouse_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [4, parseInt(whid), parseInt(limit), parseInt(offset)];
+      };
+
+      const [transactionsResult] = await conn.query(sql, queryParameter);
 
       const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
@@ -469,13 +620,25 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      sql = `
-        SELECT COUNT(o.id) AS orders_total FROM orders AS o
-        JOIN status_order so
-        ON o.status_id = so.id
-        WHERE o.status_id = ?;
-      `;
-      let [ordersTotal] = await conn.query(sql, 4);
+      if (roleid === 1) {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ?;
+        `;
+        queryParameter = [4];
+      } else {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ? AND o.warehouse_id = ?;
+        `;
+        queryParameter = [4, parseInt(whid)];
+      };
+
+      let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
@@ -489,24 +652,46 @@ module.exports = {
   getReceivedTransactions: async (req, res) => {
     console.log("Jalan /transaction/received-transactions");
     const conn = await connection.promise().getConnection();
-    const { page, limit } = req.query; // Dari frontend
+    const { page, limit, roleid, whid } = req.query; // Dari frontend
     let offset = page * limit; // Utk slice data, start data drimana
 
     try {
-      let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
-        JOIN orders o
-        ON so.id = o.status_id
-        JOIN order_detail od
-        ON o.id = od.orders_id
-        JOIN warehouse w
-        ON o.warehouse_id = w.id
-        WHERE o.status_id = ?
-        GROUP BY od.orders_id
-        ORDER BY transaction_date DESC
-        LIMIT ? OFFSET ?;
-      `
-      const [transactionsResult] = await conn.query(sql, [5, parseInt(limit), parseInt(offset)]);
+      let sql;
+      let queryParameter = [];
+
+      if (roleid === 1) {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [5, parseInt(limit), parseInt(offset)];
+      } else {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ? AND o.warehouse_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [5, parseInt(whid), parseInt(limit), parseInt(offset)];
+      };
+
+      const [transactionsResult] = await conn.query(sql, queryParameter);
 
       const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
@@ -516,13 +701,25 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      sql = `
-        SELECT COUNT(o.id) AS orders_total FROM orders AS o
-        JOIN status_order so
-        ON o.status_id = so.id
-        WHERE o.status_id = ?;
-      `;
-      let [ordersTotal] = await conn.query(sql, 5);
+      if (roleid === 1) {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ?;
+        `;
+        queryParameter = [5];
+      } else {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ? AND o.warehouse_id = ?;
+        `;
+        queryParameter = [5, parseInt(whid)];
+      };
+
+      let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
@@ -536,24 +733,46 @@ module.exports = {
   getFailTransactions: async (req, res) => {
     console.log("Jalan /transaction/fail-transactions");
     const conn = await connection.promise().getConnection();
-    const { page, limit } = req.query; // Dari frontend
+    const { page, limit, roleid, whid } = req.query; // Dari frontend
     let offset = page * limit; // Utk slice data, start data drimana
 
     try {
-      let sql = `
-        SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
-        JOIN orders o
-        ON so.id = o.status_id
-        JOIN order_detail od
-        ON o.id = od.orders_id
-        JOIN warehouse w
-        ON o.warehouse_id = w.id
-        WHERE o.status_id = ? OR o.status_id = ?
-        GROUP BY od.orders_id
-        ORDER BY transaction_date DESC
-        LIMIT ? OFFSET ?;
-      `
-      const [transactionsResult] = await conn.query(sql, [6, 7, parseInt(limit), parseInt(offset)]);
+      let sql;
+      let queryParameter = [];
+      
+      if (roleid === 1) {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ? OR o.status_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [6, 7, parseInt(limit), parseInt(offset)];
+      } else {
+        sql = `
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          JOIN orders o
+          ON so.id = o.status_id
+          JOIN order_detail od
+          ON o.id = od.orders_id
+          JOIN warehouse w
+          ON o.warehouse_id = w.id
+          WHERE o.status_id = ? OR o.status_id = ? AND o.warehouse_id = ?
+          GROUP BY od.orders_id
+          ORDER BY transaction_date DESC
+          LIMIT ? OFFSET ?;
+        `;
+        queryParameter = [6, 7, parseInt(whid), parseInt(limit), parseInt(offset)];
+      };
+
+      const [transactionsResult] = await conn.query(sql, queryParameter);
 
       const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
 
@@ -563,13 +782,25 @@ module.exports = {
           transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
       };
 
-      sql = `
-        SELECT COUNT(o.id) AS orders_total FROM orders AS o
-        JOIN status_order so
-        ON o.status_id = so.id
-        WHERE o.status_id = ? OR o.status_id = ?;
-      `;
-      let [ordersTotal] = await conn.query(sql, [6, 7]);
+      if (roleid === 1) {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ? OR o.status_id = ?;
+        `;
+        queryParameter = [6, 7];
+      } else {
+        sql = `
+          SELECT COUNT(o.id) AS orders_total FROM orders AS o
+          JOIN status_order so
+          ON o.status_id = so.id
+          WHERE o.status_id = ? OR o.status_id = ? AND o.warehouse_id = ?;
+        `;
+        queryParameter = [6, 7, parseInt(whid)];
+      };
+      
+      let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();

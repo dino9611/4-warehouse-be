@@ -155,11 +155,20 @@ module.exports = {
     }
   },
   keeplogin: async (req, res) => {
-    const { id } = req.user;
+    const { id, role_id } = req.user;
     const conn = await connection.promise().getConnection();
 
     try {
-      let sql = `select id,username,email,is_verified,role_id from user where id = ?`;
+      let sql;
+      if (role_id !== 3) { // Tambahan utk super admin & wh admin, karena butuh warehouse_id
+        sql = `
+          SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id FROM user AS u
+          JOIN warehouse_admin wa
+          WHERE u.id = ?;
+        `
+      } else {
+        sql = `select id,username,email,is_verified,role_id from user where id = ?`
+      }
       const [userData] = await conn.query(sql, [id]);
       if (!userData.length) {
         throw { message: "username tidak ditemukan" };
@@ -257,7 +266,8 @@ module.exports = {
 
     try {
       let sql = `
-              SELECT id, username, email, is_verified, role_id FROM user 
+              SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id FROM user AS u
+              JOIN warehouse_admin wa
               WHERE username = ? and password = ?;
             `;
       const [userData] = await conn.query(sql, [
@@ -276,6 +286,8 @@ module.exports = {
         id: userData[0].id,
         username: userData[0].username,
         role_id: userData[0].role_id,
+        warehouse_id: userData[0].warehouse_id,
+        warehouse_name: userData[0].warehouse_name,
       };
 
       const accessToken = createTokenAccess(dataToken);
