@@ -123,7 +123,7 @@ module.exports = {
     const conn = await connection.promise().getConnection();
 
     try {
-      let sql = `select id,username,email,is_verified,role_id from user where (username = ? or email = ?) and password = ?`;
+      let sql = `select id,username,email,is_verified,role_id, profile_picture from user where (username = ? or email = ?) and password = ?`;
       const [userData] = await conn.query(sql, [
         username,
         username,
@@ -159,7 +159,7 @@ module.exports = {
     const conn = await connection.promise().getConnection();
 
     try {
-      let sql = `select id,username,email,is_verified,role_id from user where id = ?`;
+      let sql = `select id,username,email,is_verified,role_id, profile_picture from user where id = ?`;
       const [userData] = await conn.query(sql, [id]);
       if (!userData.length) {
         throw { message: "username tidak ditemukan" };

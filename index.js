@@ -39,6 +39,7 @@ app.use(
       "x-token-refresh",
       "x-total-count",
       "x-token-email",
+      "x-total-order",
     ], // To put token in headers
   })
 );

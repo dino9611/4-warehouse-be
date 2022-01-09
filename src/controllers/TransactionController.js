@@ -26,7 +26,7 @@ module.exports = {
         cartId = cartUser[0].id;
       }
 
-      sql = `select id, qty from cart_detail where cart_id = ? and product_id = ?`;
+      sql = `select id, qty from cart_detail where cart_id = ? and product_id = ? and is_deleted = 0`;
       let [cartDetail] = await connDb.query(sql, [cartId, product_id]);
 
       sql = `select p.id, total_stock from product p
@@ -80,6 +80,10 @@ module.exports = {
       let sql = `select id from cart where user_id = ? and is_checkout = 0`;
       let [dataCart] = await connDb.query(sql, req.params.userId);
 
+      if (!dataCart.length) {
+        return res.status(200).send(errorStock);
+      }
+
       sql = `select product_id, qty from cart_detail where cart_id = ? and is_deleted = 0`;
       let [dataCartDetail] = await connDb.query(sql, dataCart[0].id);
 
@@ -89,10 +93,9 @@ module.exports = {
 
         if (dataCartDetail[i].qty > parseInt(dataStock[0]?.total_stock)) {
           errorStock.push(dataCartDetail[i].product_id);
-          console.log("tes");
         }
       }
-      console.log(errorStock);
+
       connDb.release();
 
       return res.status(200).send(errorStock);
@@ -130,10 +133,32 @@ module.exports = {
     }
   },
 
+  getTotalItemInCart: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      let sql = `select id from cart where user_id = ? and is_checkout = 0`;
+      let [dataCart] = await connDb.query(sql, [req.params.userId]);
+
+      if (!dataCart.length) {
+        return;
+      }
+      sql = `select sum(qty) as total_item from cart_detail
+      where cart_id = ? and is_deleted = 0`;
+      let [totalItem] = await connDb.query(sql, dataCart[0].id);
+
+      connDb.release();
+
+      return res.status(200).send(totalItem[0].total_item);
+    } catch (error) {
+      connDb.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
   deleteProductInCart: async (req, res) => {
     const connDb = connection.promise();
-
-    console.log(req.params.cartDetailId);
 
     try {
       let sql = `update cart_detail set is_deleted = 1 where id = ?`;
@@ -164,9 +189,10 @@ module.exports = {
       user_id,
       cart_id,
       shipping_fee,
-      destination,
+      address_id,
       bank_id,
       warehouse_id,
+      courier,
     } = req.body;
 
     try {
@@ -175,7 +201,7 @@ module.exports = {
       if (
         !user_id &&
         !shipping_fee &&
-        !destination &&
+        !address_id &&
         !bank_id &&
         !warehouse_id
       ) {
@@ -184,17 +210,18 @@ module.exports = {
 
       // Update is_checkout pada table cart menjadi 1
 
-      sql = `update cart set ? where user_id = ? and is_checkout = 0`;
-      await connDb.query(sql, [{ is_checkout: 1 }, user_id]);
+      sql = `update cart set is_checkout = 1 where user_id = ? and is_checkout = 0`;
+      await connDb.query(sql, [user_id]);
 
       // Insert data baru ke tabel order
 
       let dataOrder = {
         user_id,
         shipping_fee,
-        destination,
+        address_id,
         bank_id,
         warehouse_id,
+        courier,
       };
 
       sql = `insert into orders set ?`;
@@ -233,9 +260,11 @@ module.exports = {
 
       await connDb.commit();
 
-      return res
-        .status(200)
-        .send({ data: cart_id, message: "Berhasil checkout" });
+      return res.status(200).send({
+        data: cart_id,
+        ordersId: order.insertId,
+        message: "Berhasil checkout",
+      });
     } catch (error) {
       connDb.release();
       await connDb.rollback();
@@ -252,6 +281,46 @@ module.exports = {
       let [dataBank] = await connDb.query(sql);
 
       return res.status(200).send(dataBank);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  uploadPaymentProof: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      const path = "/assets/images/uploaded/payment-proof";
+
+      imagePath = req.files.image
+        ? `${path}/${req.files.image[0].filename}`
+        : null;
+
+      const dataPaymentProof = {
+        status_id: 2,
+        payment_proof: imagePath,
+      };
+
+      let sql = `update orders set ? where id = ?`;
+      await connDb.query(sql, [dataPaymentProof, req.params.ordersId]);
+
+      sql = `select payment_proof from orders where id = ?`;
+      let [paymentProof] = await connDb.query(sql, req.params.ordersId);
+
+      return res.status(200).send(paymentProof[0]);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getDataOrders: async (req, res) => {
+    const connDb = connection.promise();
+
+    try {
+      let sql = `select create_on, bank_id, shipping_fee from orders where id = ?`;
+      let [dataOrders] = await connDb.query(sql, req.params.ordersId);
+
+      return res.status(200).send(dataOrders);
     } catch (error) {
       return res.status(500).send({ message: error.message });
     }

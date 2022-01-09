@@ -3,8 +3,6 @@ const router = express.Router();
 const { uploader, verifyPass } = require("../helpers/");
 const { connection } = require("../connection");
 const { productController } = require("./../controllers");
-const { getProdCategory, addProduct, listProduct, getDetailedProduct } =
-  productController;
 const {
   getProdCategory,
   addProduct,
@@ -13,6 +11,7 @@ const {
   deleteProdImg,
   listProduct,
   deleteProduct,
+  getDetailedProduct,
 } = productController;
 
 let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product image

@@ -1,3 +1,5 @@
+const express = require("express");
+const app = express();
 const { connection } = require("../connection");
 const RajaOngkir = require("rajaongkir-nodejs").Starter(
   "8b87be47bf10fc3f713790a8957c0ab6"
@@ -75,16 +77,6 @@ module.exports = {
     }
   },
 
-  addAddress: async (req, res) => {
-    const connDb = connection.promise();
-
-    try {
-      let sql = `insert into address `;
-    } catch (error) {
-      return res.status(500).send({ message: error.message });
-    }
-  },
-
   shippingFee: async (req, res) => {
     const connDb = connection.promise();
 
@@ -112,6 +104,117 @@ module.exports = {
         .status(200)
         .send({ ...res1.rajaongkir.results, ...findNearest });
     } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getProvince: async (req, res) => {
+    try {
+      let provinces = await RajaOngkir.getProvinces();
+
+      return res.status(200).send(provinces.rajaongkir.results);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getcity: async (req, res) => {
+    try {
+      let cities = await RajaOngkir.getCities();
+
+      let filterCities = cities.rajaongkir.results.filter((el) =>
+        el.province.toLowerCase().includes(req.params.province.toLowerCase())
+      );
+
+      return res.status(200).send(filterCities);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  addNewAddress: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+    const {
+      user_id,
+      recipient,
+      phone_number,
+      address,
+      province,
+      city,
+      latitude,
+      longitude,
+      is_main_address,
+    } = req.body;
+
+    try {
+      await connDb.beginTransaction();
+
+      let sql = `select id from address where user_id = ?`;
+      let [isAddressTrue] = await connDb.query(sql, user_id);
+
+      let dataAddress;
+
+      if (!isAddressTrue.length) {
+        dataAddress = {
+          user_id,
+          recipient,
+          phone_number,
+          address,
+          latitude,
+          longitude,
+          is_main_address: 1,
+        };
+      } else {
+        dataAddress = {
+          user_id,
+          recipient,
+          phone_number,
+          address,
+          latitude,
+          longitude,
+          is_main_address,
+        };
+      }
+
+      sql = `insert into address set ?`;
+      let [newAddress] = await connDb.query(sql, dataAddress);
+
+      let provinces = await RajaOngkir.getProvinces();
+
+      let filterProvince = provinces.rajaongkir.results.filter((el) =>
+        el.province.toLowerCase().includes(province.toLowerCase())
+      );
+
+      let cities = await RajaOngkir.getCities();
+
+      let filterCity = cities.rajaongkir.results.filter((el) =>
+        el.city_name.toLowerCase().includes(city.toLowerCase())
+      );
+
+      const dataRegion = {
+        address_id: newAddress.insertId,
+        province,
+        province_id: filterProvince[0].province_id,
+        city,
+        city_id: filterCity[0].city_id,
+      };
+
+      sql = `insert into region set ?`;
+      await connDb.query(sql, dataRegion);
+
+      await connDb.commit();
+
+      connDb.release();
+
+      return res
+        .status(200)
+        .send({ message: "Berhasil menyimpan alamat baru" });
+    } catch (error) {
+      await connDb.rollback();
+      connDb.release();
+
       return res.status(500).send({ message: error.message });
     }
   },
