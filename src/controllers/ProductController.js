@@ -89,12 +89,13 @@ module.exports = {
   editProdNoImg: async (req, res) => {
     console.log("Jalan /product/edit/:id");
     const conn = await connection.promise().getConnection();
-    const {id} = req.params;
-    const {name, category_id, weight, price, product_cost, description} = req.body;
+    const { id } = req.params;
+    const { name, category_id, weight, price, product_cost, description } =
+      req.body;
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
-      
+
       let sql = `Update product SET ? WHERE id = ?;`;
       await conn.query(sql, [
         {
@@ -103,13 +104,13 @@ module.exports = {
           weight: weight,
           price: price,
           product_cost: product_cost,
-          description: description
-        }, 
-        id
+          description: description,
+        },
+        id,
       ]);
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
-      return res.status(200).send({message: "Edit Success"});
+      return res.status(200).send({ message: "Edit Success" });
     } catch (error) {
       await conn.rollback(); // Rollback data klo terjadi error/gagal
       conn.release();
@@ -120,9 +121,9 @@ module.exports = {
   editProdImg: async (req, res) => {
     console.log("Jalan /product/edit/image/:id");
     const conn = await connection.promise().getConnection();
-    const {id} = req.params;
+    const { id } = req.params;
     const { image_to_del, img_del_index } = req.headers;
-    
+
     const { images } = req.files;
     let newPath = `"/assets/images/uploaded/${req.categoryFolder}/${images[0].filename}"`; // Utk menyiapkan file pathname baru agar bisa upload ke db sebagai JSON
 
@@ -133,25 +134,27 @@ module.exports = {
       const [imgResult] = await conn.query(sql, id);
 
       let newImgEditArr = imgResult[0].images; // Hasil array data images
-      newImgEditArr.forEach((val, index) => { // Looping & diberi "" agar nantinya bisa dimasukan kembali sebagai JSON ke MySql
-        newImgEditArr[index] = `"${val}"`
+      newImgEditArr.forEach((val, index) => {
+        // Looping & diberi "" agar nantinya bisa dimasukan kembali sebagai JSON ke MySql
+        newImgEditArr[index] = `"${val}"`;
       });
       newImgEditArr.splice(parseInt(img_del_index), 1, newPath); // Masukan filepath image baru kedalam array sesuai index image yang diganti/edit dari FE
       if (!newImgEditArr[1]) {
         newImgEditArr.splice(1, 1); // Bila image kosong ditengah (index 1, diantara index 0 & 2), image index 2 otomatis menjadi index 1
-      };
+      }
 
       sql = `Update product SET ? WHERE id = ?;`;
-      await conn.query(sql, [{images: `[${newImgEditArr}]`}, id]);
+      await conn.query(sql, [{ images: `[${newImgEditArr}]` }, id]);
 
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
       if (image_to_del) {
         fs.unlinkSync("./public" + image_to_del); // Menghapus file image sebelumnya yang sekarang digantikan image baru
-        return res.status(200).send({message: "Edit Image Success"});
-      } else { // Bila tidak ada file image sebelumnya, maka langsung di-selesaikan
-        return res.status(200).send({message: "Edit Image Success"});
-      };
+        return res.status(200).send({ message: "Edit Image Success" });
+      } else {
+        // Bila tidak ada file image sebelumnya, maka langsung di-selesaikan
+        return res.status(200).send({ message: "Edit Image Success" });
+      }
     } catch (error) {
       await conn.rollback(); // Rollback data klo terjadi error/gagal
       conn.release();
@@ -162,8 +165,8 @@ module.exports = {
   deleteProdImg: async (req, res) => {
     console.log("Jalan /product/delete/image/:id");
     const conn = await connection.promise().getConnection();
-    const {id} = req.params;
-    const {index_del_img, prev_img_path} = req.headers;
+    const { id } = req.params;
+    const { index_del_img, prev_img_path } = req.headers;
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
@@ -172,22 +175,23 @@ module.exports = {
       const [imgResult] = await conn.query(sql, id);
 
       let newImgArray = imgResult[0].images; // Hasil array data images
-      newImgArray.forEach((val, index) => { // Looping & diberi "" agar nantinya bisa dimasukan kembali sebagai JSON ke MySql
+      newImgArray.forEach((val, index) => {
+        // Looping & diberi "" agar nantinya bisa dimasukan kembali sebagai JSON ke MySql
         if (index == index_del_img) {
           newImgArray[index] = "";
         } else {
-          newImgArray[index] = `"${val}"`
-        };
+          newImgArray[index] = `"${val}"`;
+        }
       });
       newImgArray.splice(parseInt(index_del_img), 1); // Delete file image sebelumnya dgn menyesuaikan index delete yg diterima dari FE
 
       sql = `Update product SET ? WHERE id = ?;`;
-      await conn.query(sql, [{images: `[${newImgArray}]`}, id]);
+      await conn.query(sql, [{ images: `[${newImgArray}]` }, id]);
 
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
       fs.unlinkSync("./public" + prev_img_path); // Menghapus file image sebelumnya yang sekarang digantikan image baru
-      return res.status(200).send({message: "Delete Image Success"});
+      return res.status(200).send({ message: "Delete Image Success" });
     } catch (error) {
       await conn.rollback(); // Rollback data klo terjadi error/gagal
       conn.release();
@@ -202,20 +206,24 @@ module.exports = {
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
-      
+
       let sql = `SELECT id FROM product where id = ?;`;
-      const [result] = await conn.query(sql, [prodId])
+      const [result] = await conn.query(sql, [prodId]);
 
       if (!result.length) {
         conn.release();
-        return res.send({failMessage: "Product ID not found, please contact Super Admin"});
+        return res.send({
+          failMessage: "Product ID not found, please contact Super Admin",
+        });
       } else {
         sql = `UPDATE product SET is_delete = ? WHERE id = ?;`;
         await conn.query(sql, [1, prodId]);
 
         await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
         conn.release();
-        return res.status(200).send({message: "Delete Success (list will refresh)"});
+        return res
+          .status(200)
+          .send({ message: "Delete Success (list will refresh)" });
       }
     } catch (error) {
       await conn.rollback(); // Rollback data klo terjadi error/gagal

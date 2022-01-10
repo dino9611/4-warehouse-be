@@ -48,7 +48,7 @@ app.use(express.static("public"));
 
 // Import Routes
 const {
-  AuthRoutes,
+  authRoutes,
   productRoute,
   adminRoute,
   warehouseRoute,
@@ -57,10 +57,10 @@ const {
 } = require("./src/routes");
 
 // Routing
-app.use("/auth", AuthRoutes);
+// app.use("/auth", AuthRoutes);
 app.use("/admin", adminRoute);
 app.use("/profile", profileRoute);
-app.use("/auth", AuthRoutes);
+app.use("/auth", authRoutes);
 app.use("/product", productRoute);
 app.use("/admin", adminRoute);
 app.use("/warehouse", warehouseRoute);

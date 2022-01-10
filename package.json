@@ -26,6 +26,7 @@
     "nodemailer": "^6.7.0",
     "nodemon": "^2.0.15",
     "npm": "^8.0.0",
+    "rajaongkir-nodejs": "^0.2.0",
     "winston": "^3.3.3"
   }
 }
