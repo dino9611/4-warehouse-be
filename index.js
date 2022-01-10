@@ -57,6 +57,7 @@ const {
   transactionRoute,
   locationRoute,
   historyRoute,
+  stockRoute,
 } = require("./src/routes");
 
 // Routing
@@ -71,5 +72,6 @@ app.use("/sales", salesRoute);
 app.use("/transaction", transactionRoute);
 app.use("/location", locationRoute);
 app.use("/history", historyRoute);
+app.use("/stock", stockRoute);
 
 app.listen(PORT, () => console.log(`API running ${PORT}`));

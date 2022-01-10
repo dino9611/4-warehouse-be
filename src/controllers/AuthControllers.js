@@ -160,15 +160,16 @@ module.exports = {
 
     try {
       let sql;
-      if (role_id !== 3) { // Tambahan utk super admin & wh admin, karena butuh warehouse_id
+      if (role_id !== 3) {
+        // Tambahan utk super admin & wh admin, karena butuh warehouse_id
         sql = `
           SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id FROM user AS u
           LEFT JOIN warehouse_admin wa
           ON u.id = wa.user_id
           WHERE u.id = ?;
-        `
+        `;
       } else {
-        sql = `select id,username,email,is_verified,role_id from user where id = ?`
+        sql = `select id,username,email,is_verified,role_id from user where id = ?`;
       }
       const [userData] = await conn.query(sql, [id]);
       if (!userData.length) {
@@ -276,7 +277,7 @@ module.exports = {
         inputtedUsername,
         // inputtedPassword,
         // ! Khusus sesi testing gunakan tanpa hash karena blm byk dummy data password nya pake hashpass, dapat menyebabkan salah matching password dgn db
-        hashPass(inputtedPassword)
+        inputtedPassword,
       ]);
 
       if (!userData.length) {

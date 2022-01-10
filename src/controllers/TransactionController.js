@@ -269,7 +269,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -283,7 +283,7 @@ module.exports = {
         queryParameter = [parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -296,34 +296,47 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `SELECT COUNT(id) AS orders_total FROM orders;`;
       } else {
         sql = `SELECT COUNT(id) AS orders_total FROM orders WHERE warehouse_id = ${whid};`;
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getWaitPayTransactions: async (req, res) => {
     console.log("Jalan /transaction/wait-pay-transactions");
@@ -337,7 +350,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -352,7 +365,7 @@ module.exports = {
         queryParameter = [1, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -365,17 +378,30 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [1, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -393,18 +419,18 @@ module.exports = {
           WHERE o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [1, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getWaitConfirmTrans: async (req, res) => {
     console.log("Jalan /transaction/wait-confirm-transactions");
@@ -418,7 +444,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -433,7 +459,7 @@ module.exports = {
         queryParameter = [2, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -446,17 +472,30 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [2, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "false"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "false",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -474,18 +513,18 @@ module.exports = {
           WHERE o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [2, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getOnProcessTrans: async (req, res) => {
     console.log("Jalan /transaction/onprocess-transactions");
@@ -499,7 +538,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -514,7 +553,7 @@ module.exports = {
         queryParameter = [3, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -527,17 +566,30 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [3, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -555,18 +607,18 @@ module.exports = {
           WHERE o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [3, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getDelivTransactions: async (req, res) => {
     console.log("Jalan /transaction/delivery-transactions");
@@ -580,7 +632,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -595,7 +647,7 @@ module.exports = {
         queryParameter = [4, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -608,17 +660,30 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [4, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -636,18 +701,18 @@ module.exports = {
           WHERE o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [4, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getReceivedTransactions: async (req, res) => {
     console.log("Jalan /transaction/received-transactions");
@@ -661,7 +726,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -676,7 +741,7 @@ module.exports = {
         queryParameter = [5, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -689,17 +754,30 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [5, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -717,18 +795,18 @@ module.exports = {
           WHERE o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [5, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getFailTransactions: async (req, res) => {
     console.log("Jalan /transaction/fail-transactions");
@@ -739,10 +817,10 @@ module.exports = {
     try {
       let sql;
       let queryParameter = [];
-      
+
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -757,7 +835,7 @@ module.exports = {
         queryParameter = [6, 7, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -769,18 +847,37 @@ module.exports = {
           ORDER BY transaction_date DESC
           LIMIT ? OFFSET ?;
         `;
-        queryParameter = [6, 7, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+        queryParameter = [
+          6,
+          7,
+          parseInt(whid),
+          parseInt(limit),
+          parseInt(offset),
+        ];
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -798,18 +895,18 @@ module.exports = {
           WHERE o.status_id = ? OR o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [6, 7, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getTransactionDetail: async (req, res) => {
     console.log("Jalan /transaction/detail");
@@ -832,16 +929,20 @@ module.exports = {
         WHERE o.id = ?
         GROUP BY od.product_id
         ORDER BY od.product_id;
-      `
-      const [transactionDetailResult] = await conn.query(sql, [parseInt(whid), 0, parseInt(id)]);
+      `;
+      const [transactionDetailResult] = await conn.query(sql, [
+        parseInt(whid),
+        0,
+        parseInt(id),
+      ]);
 
       conn.release();
       return res.status(200).send(transactionDetailResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getShippingInfo: async (req, res) => {
     console.log("Jalan /transaction/detail-shipping");
@@ -858,16 +959,16 @@ module.exports = {
         JOIN address a
         ON u.id = a.user_id
         WHERE o.id = ? AND a.is_main_address = ?;
-      `
+      `;
       const [shippingInfoResult] = await conn.query(sql, [parseInt(id), 1]);
 
       conn.release();
       return res.status(200).send(shippingInfoResult[0]);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   confirmTransactionPay: async (req, res) => {
     console.log("Jalan /transaction/confirm-payment");
@@ -881,25 +982,27 @@ module.exports = {
       let sql = `
         UPDATE orders SET status_id = ?
         WHERE id = ?;
-      `
+      `;
 
       let statusIdParams;
-      (actionIdentifier === 1) ? statusIdParams = 3 : statusIdParams = 6;
+      actionIdentifier === 1 ? (statusIdParams = 3) : (statusIdParams = 6);
 
       await conn.query(sql, [statusIdParams, parseInt(transactionId)]);
 
       let responseMessage = "";
-      (actionIdentifier === 1) ? responseMessage = "Transaction accepted" : responseMessage = "Transaction rejected";
+      actionIdentifier === 1
+        ? (responseMessage = "Transaction accepted")
+        : (responseMessage = "Transaction rejected");
 
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
       return res.status(200).send({ message: responseMessage });
-      } catch (error) {
-          await conn.rollback(); // Rollback data klo terjadi error/gagal
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   confirmTransactionDelivery: async (req, res) => {
     console.log("Jalan /transaction/confirm-delivery");
@@ -910,7 +1013,8 @@ module.exports = {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
       let sql;
 
-      if (actionIdentifier === 1) { // ? Bila warehouse admin pada frontend klik button "Send"
+      if (actionIdentifier === 1) {
+        // ? Bila warehouse admin pada frontend klik button "Send"
         sql = `
           SELECT o.id AS order_id, od.product_id, od.qty, IFNULL(st.total_stock, 0) AS total_stock, IF(st.total_stock >= od.qty, "Sufficient", "Insufficient") AS stock_status FROM status_order AS so
           JOIN orders o
@@ -927,14 +1031,20 @@ module.exports = {
           GROUP BY od.product_id
           ORDER BY od.product_id;
         `;
-        
-        const [validationResult] = await conn.query(sql, [parseInt(warehouseId), 0, parseInt(orderId)]);
 
-        const isAllSufficient = (currentValue) => currentValue.qty <  currentValue.total_stock;
+        const [validationResult] = await conn.query(sql, [
+          parseInt(warehouseId),
+          0,
+          parseInt(orderId),
+        ]);
+
+        const isAllSufficient = (currentValue) =>
+          currentValue.qty < currentValue.total_stock;
         const stockCheck = validationResult.every(isAllSufficient);
         // ! Digunakan utk validasi ulang stok stlh klik button "Send", apakah stok cukup/tidak, dikhawatirkan terjadi perubahan stok real-time saat klik button
 
-        if (stockCheck) { // * Bila validasi cek stok = true (stok pesanan masih mencukupi)
+        if (stockCheck) {
+          // * Bila validasi cek stok = true (stok pesanan masih mencukupi)
           sql = `
             UPDATE orders SET status_id = ?
             WHERE id = ?;
@@ -951,13 +1061,19 @@ module.exports = {
 
           await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
           conn.release();
-          return res.status(200).send({ message: `Yeay! Order #${orderId} otw to customer` });
-        } else { // * Bila validasi cek stok = false (stok pesanan tidak mencukupi)
+          return res
+            .status(200)
+            .send({ message: `Yeay! Order #${orderId} otw to customer` });
+        } else {
+          // * Bila validasi cek stok = false (stok pesanan tidak mencukupi)
           await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
           conn.release();
-          return res.status(200).send({ message: `Stock change occurred during confirmation, please re-check stock/request stock` });
-        };
-      } else { // ? Bila warehouse admin pada frontend klik button "Reject"
+          return res.status(200).send({
+            message: `Stock change occurred during confirmation, please re-check stock/request stock`,
+          });
+        }
+      } else {
+        // ? Bila warehouse admin pada frontend klik button "Reject"
         sql = `
           UPDATE orders SET status_id = ?
           WHERE id = ?;
@@ -968,30 +1084,30 @@ module.exports = {
         await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
         conn.release();
         return res.status(200).send({ message: "Transaction rejected" });
-      };
-      } catch (error) {
-          await conn.rollback(); // Rollback data klo terjadi error/gagal
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
       }
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getTransactionStatuses: async (req, res) => {
     console.log("Jalan /transaction/statuses");
     const conn = await connection.promise().getConnection();
 
     try {
-      let sql = `SELECT id, status FROM status_order;`
+      let sql = `SELECT id, status FROM status_order;`;
 
       const [statusesResult] = await conn.query(sql);
 
       conn.release();
       return res.status(200).send(statusesResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getPaymentProof: async (req, res) => {
     console.log("Jalan /transaction/payment-proof");
@@ -999,16 +1115,16 @@ module.exports = {
     const { orderId } = req.params; // Dari frontend
 
     try {
-      let sql = `SELECT payment_proof FROM orders WHERE id = ?;`
+      let sql = `SELECT payment_proof FROM orders WHERE id = ?;`;
 
       const [payProofResult] = await conn.query(sql, orderId);
 
       conn.release();
       return res.status(200).send(payProofResult[0].payment_proof);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
 };
