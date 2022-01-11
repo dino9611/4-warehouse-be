@@ -936,6 +936,35 @@ module.exports = {
         parseInt(id),
       ]);
 
+      for (let i = 0; i < transactionDetailResult.length; i++) {
+        if (transactionDetailResult[i].stock_status === "Sufficient") {
+          transactionDetailResult[i].status_request = "Tidak perlu request";
+          continue;
+        }
+
+        sql = `select * from log_request 
+        where orders_id = ? and product_id = ?`;
+        let [cekStatus] = await conn.query(sql, [
+          transactionDetailResult[i].order_id,
+          transactionDetailResult[i].product_id,
+        ]);
+
+        if (!cekStatus.length) {
+          transactionDetailResult[i].status_request = "Request required";
+          continue;
+        }
+
+        const filterRequest = cekStatus.filter((el) => el.status_id !== 1);
+        console.log(filterRequest);
+        if (filterRequest.length) {
+          console.log("perlu request");
+          transactionDetailResult[i].status_request = "Perlu requests";
+        } else {
+          console.log("requested");
+          transactionDetailResult[i].status_request = "Requested";
+        }
+      }
+
       conn.release();
       return res.status(200).send(transactionDetailResult);
     } catch (error) {
