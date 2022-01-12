@@ -191,7 +191,7 @@ module.exports = {
                 SELECT 
                 so.status, 
                 COUNT(o.status_id) AS transaction_count, 
-                ROUND(COUNT(o.status_id) * 100 / (SELECT COUNT(status_id) AS c FROM orders), 1) AS contribution 
+                ROUND(COUNT(o.status_id) * 100 / (SELECT COUNT(status_id) AS c FROM orders WHERE YEAR(create_on) = ?), 1) AS contribution 
                 FROM orders AS o
                     JOIN status_order so
                     ON o.status_id = so.id
@@ -199,8 +199,8 @@ module.exports = {
                     GROUP BY status 
                     ORDER BY so.id ASC;
             `
-            const [statusResult] = await conn.query(sql, [parseInt(filter_year)]);
-
+            const [statusResult] = await conn.query(sql, [parseInt(filter_year), parseInt(filter_year)]);
+            
             conn.release();
             return res.status(200).send(statusResult);
         } catch (error) {

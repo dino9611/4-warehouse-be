@@ -18,8 +18,8 @@ const {
   getFailTransactions,
   getTransactionDetail,
   getShippingInfo,
-  confirmTransactionPay,
-  confirmTransactionDelivery,
+  confirmRejectTransactionPay,
+  confirmRejectTransactionDelivery,
   getTransactionStatuses,
   getPaymentProof
 } = transactionController;
@@ -40,8 +40,8 @@ router.get("/received-transactions", getReceivedTransactions);
 router.get("/fail-transactions", getFailTransactions);
 router.get("/detail", getTransactionDetail);
 router.get("/detail-shipping", getShippingInfo);
-router.patch("/confirm-payment/:transactionId", confirmTransactionPay);
-router.patch("/confirm-delivery/:transactionId", confirmTransactionDelivery);
+router.patch("/confirm-payment/:transactionId", confirmRejectTransactionPay);
+router.patch("/confirm-delivery/:transactionId", confirmRejectTransactionDelivery);
 router.get("/statuses", getTransactionStatuses);
 router.get("/payment-proof/:orderId", getPaymentProof);
 
