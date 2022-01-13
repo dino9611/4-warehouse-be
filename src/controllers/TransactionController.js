@@ -942,8 +942,8 @@ module.exports = {
           continue;
         }
 
-        sql = `select * from log_request 
-        where orders_id = ? and product_id = ?`;
+        sql = `select sum(qty) as total_qty_req from log_request
+        where orders_id = ? and product_id = ? and status_id = 1`;
         let [cekStatus] = await conn.query(sql, [
           transactionDetailResult[i].order_id,
           transactionDetailResult[i].product_id,
@@ -954,21 +954,23 @@ module.exports = {
           continue;
         }
 
-        const filterRequest = cekStatus.filter((el) => el.status_id !== 1);
-        console.log(filterRequest);
-        if (filterRequest.length) {
-          console.log("perlu request");
-          transactionDetailResult[i].status_request = "Perlu requests";
+        if (
+          parseInt(cekStatus[0].total_qty_req) !==
+          parseInt(transactionDetailResult[i].qty) -
+            parseInt(transactionDetailResult[i].total_stock)
+        ) {
+          transactionDetailResult[i].status_request = "Request required";
         } else {
-          console.log("requested");
           transactionDetailResult[i].status_request = "Requested";
         }
       }
+      console.log(transactionDetailResult);
 
       conn.release();
       return res.status(200).send(transactionDetailResult);
     } catch (error) {
       conn.release();
+      console.log(error.message);
       console.log(error);
       return res.status(500).send({ message: error.message || "Server error" });
     }
@@ -1037,12 +1039,13 @@ module.exports = {
     console.log("Jalan /transaction/confirm-delivery");
     const conn = await connection.promise().getConnection();
     const { actionIdentifier, warehouseId, orderId } = req.body; // Dari frontend
+    //! Dari frontend actionIdentifier "Accept" = 1 - true, "Reject" = 0 - false
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
       let sql;
 
-      if (actionIdentifier === 1) {
+      if (actionIdentifier) {
         // ? Bila warehouse admin pada frontend klik button "Send"
         sql = `
           SELECT o.id AS order_id, od.product_id, od.qty, IFNULL(st.total_stock, 0) AS total_stock, IF(st.total_stock >= od.qty, "Sufficient", "Insufficient") AS stock_status FROM status_order AS so
@@ -1068,7 +1071,7 @@ module.exports = {
         ]);
 
         const isAllSufficient = (currentValue) =>
-          currentValue.qty < currentValue.total_stock;
+          currentValue.qty <= currentValue.total_stock;
         const stockCheck = validationResult.every(isAllSufficient);
         // ! Digunakan utk validasi ulang stok stlh klik button "Send", apakah stok cukup/tidak, dikhawatirkan terjadi perubahan stok real-time saat klik button
 
@@ -1109,6 +1112,13 @@ module.exports = {
         `;
 
         await conn.query(sql, [6, parseInt(orderId)]);
+
+        sql = `
+          DELETE FROM stock
+          WHERE orders_id = ?;
+        `;
+
+        await conn.query(sql, parseInt(orderId));
 
         await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
         conn.release();
