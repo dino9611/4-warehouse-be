@@ -53,6 +53,7 @@ const {
   adminRoute,
   warehouseRoute,
   profileRoute,
+  salesRoute,
   transactionRoute,
   locationRoute,
   historyRoute,
@@ -66,6 +67,7 @@ app.use("/auth", AuthRoutes);
 app.use("/product", productRoute);
 app.use("/admin", adminRoute);
 app.use("/warehouse", warehouseRoute);
+app.use("/sales", salesRoute);
 app.use("/transaction", transactionRoute);
 app.use("/location", locationRoute);
 app.use("/history", historyRoute);
