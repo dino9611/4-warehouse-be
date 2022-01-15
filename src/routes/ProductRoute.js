@@ -18,6 +18,7 @@ let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product 
 
 const checkCategoryFolder = async (req, res, next) => {
   // Utk menentukan route folder uploaded product image by category
+  console.log("Jalan /product/determine-category");
   const conn = await connection.promise().getConnection();
   const { prod_category } = req.body;
 

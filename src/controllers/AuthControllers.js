@@ -162,9 +162,11 @@ module.exports = {
       let sql;
       if (role_id !== 3) { // Tambahan utk super admin & wh admin, karena butuh warehouse_id
         sql = `
-          SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id FROM user AS u
+          SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id, w.name AS warehouse_name FROM user AS u
           LEFT JOIN warehouse_admin wa
           ON u.id = wa.user_id
+          LEFT JOIN warehouse w
+          ON wa.warehouse_id = w.id
           WHERE u.id = ?;
         `
       } else {
@@ -267,9 +269,11 @@ module.exports = {
 
     try {
       let sql = `
-              SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id FROM user AS u
+              SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id, w.name AS warehouse_name FROM user AS u
               LEFT JOIN warehouse_admin wa
               ON u.id = wa.user_id
+              LEFT JOIN warehouse w
+              ON wa.warehouse_id = w.id
               WHERE username = ? and password = ?;
             `;
       const [userData] = await conn.query(sql, [

@@ -764,7 +764,7 @@ module.exports = {
           ON o.id = od.orders_id
           JOIN warehouse w
           ON o.warehouse_id = w.id
-          WHERE o.status_id = ? OR o.status_id = ? AND o.warehouse_id = ?
+          WHERE o.status_id IN(?, ?) AND o.warehouse_id = ?
           GROUP BY od.orders_id
           ORDER BY transaction_date DESC
           LIMIT ? OFFSET ?;
@@ -869,11 +869,12 @@ module.exports = {
           return res.status(500).send({ message: error.message || "Server error" });
       }
   },
-  confirmTransactionPay: async (req, res) => {
+  confirmRejectTransactionPay: async (req, res) => {
     console.log("Jalan /transaction/confirm-payment");
     const conn = await connection.promise().getConnection();
     const { transactionId } = req.params; // Dari frontend
-    const { actionIdentifier } = req.body; // Dari frontend
+    const { actionIdentifier } = req.body; 
+    //! Dari frontend actionIdentifier "Accept" = 1 - true, "Reject" = 0 - false
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
@@ -881,15 +882,28 @@ module.exports = {
       let sql = `
         UPDATE orders SET status_id = ?
         WHERE id = ?;
-      `
+      `;
 
       let statusIdParams;
-      (actionIdentifier === 1) ? statusIdParams = 3 : statusIdParams = 6;
+      actionIdentifier ? statusIdParams = 3 : statusIdParams = 6;
 
       await conn.query(sql, [statusIdParams, parseInt(transactionId)]);
 
       let responseMessage = "";
-      (actionIdentifier === 1) ? responseMessage = "Transaction accepted" : responseMessage = "Transaction rejected";
+      actionIdentifier ? responseMessage = "Transaction accepted" : responseMessage = "Transaction rejected";
+
+      if (!actionIdentifier) {
+        sql = `
+          DELETE FROM stock
+          WHERE orders_id = ?;
+        `;
+
+        await conn.query(sql, parseInt(transactionId));
+
+        await conn.commit();
+        conn.release();
+        return res.status(200).send({ message: responseMessage });
+      }
 
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
@@ -901,16 +915,17 @@ module.exports = {
           return res.status(500).send({ message: error.message || "Server error" });
       }
   },
-  confirmTransactionDelivery: async (req, res) => {
+  confirmRejectTransactionDelivery: async (req, res) => {
     console.log("Jalan /transaction/confirm-delivery");
     const conn = await connection.promise().getConnection();
     const { actionIdentifier, warehouseId, orderId } = req.body; // Dari frontend
+    //! Dari frontend actionIdentifier "Accept" = 1 - true, "Reject" = 0 - false
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
       let sql;
 
-      if (actionIdentifier === 1) { // ? Bila warehouse admin pada frontend klik button "Send"
+      if (actionIdentifier) { // ? Bila warehouse admin pada frontend klik button "Send"
         sql = `
           SELECT o.id AS order_id, od.product_id, od.qty, IFNULL(st.total_stock, 0) AS total_stock, IF(st.total_stock >= od.qty, "Sufficient", "Insufficient") AS stock_status FROM status_order AS so
           JOIN orders o
@@ -964,6 +979,13 @@ module.exports = {
         `;
 
         await conn.query(sql, [6, parseInt(orderId)]);
+
+        sql = `
+          DELETE FROM stock
+          WHERE orders_id = ?;
+        `;
+
+        await conn.query(sql, parseInt(orderId));
 
         await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
         conn.release();
