@@ -1,6 +1,6 @@
 const { connection } = require("../connection");
-const RajaOngkir = require("rajaongkir-nodejs").Starter(
-  "d167888ba27e21b1202734bfc9071219"
+const rajaOngkir = require("rajaongkir-nodejs").Starter(
+  "9387bc437b911646faccf03eacfd0b66"
 );
 
 module.exports = {
@@ -43,14 +43,14 @@ module.exports = {
 
     try {
       // get data yang ada di address
-      let sql = `select a.id, recipient, phone_number ,address, latitude, longitude, province, province_id, city, city_id, is_main_address from address a
+      let sql = `select a.id, recipient, phone_number ,address, latitude, longitude, province, province_id, city, city_id, is_main_address, is_delete from address a
       join region r
       on r.address_id = a.id
       where user_id = ? and is_delete = 0
       order by is_main_address desc`;
       let [dataAddress] = await conn.query(sql, [req.params.userId]);
-      if (dataAddress[0].is_delete === 1) {
-      }
+      // if (dataAddress[0].is_delete === 1) {
+      // }
       // console.log(dataAddress);
       conn.release();
       return res.status(200).send(dataAddress);
@@ -66,6 +66,8 @@ module.exports = {
       address,
       longitude,
       latitude,
+      province_id,
+      city_id,
       recipient,
       phone_number,
       city,
@@ -74,7 +76,7 @@ module.exports = {
     let { userId } = req.params;
     try {
       //dapetin id address dari address
-      let sql = `select id from address where user_id = ?`;
+      let sql = `select id from address where user_id = ? and is_delete = 0`;
       let [idAddress] = await conn.query(sql, [userId]);
       // let idAddress = await conn.query(sql, [user_id])
       // idAddress = idAddress[0] //? line 57 = 58 & 59
@@ -82,6 +84,8 @@ module.exports = {
       if (idAddress.length) {
         is_main_address = 0;
       }
+      console.log(is_main_address);
+      console.log(idAddress);
       conn.release();
       //data untuk insert
       let dataInsert = {
@@ -95,13 +99,15 @@ module.exports = {
       };
       //masukkin data yang udh di input ke database
       sql = `INSERT into address set ?`;
-      await conn.query(sql, [dataInsert]);
+      let [insertRegion] = await conn.query(sql, [dataInsert]);
 
       //insert data ke region
       let dataRegion = {
         province,
+        province_id,
+        city_id,
         city,
-        address_id: idAddress[0].id,
+        address_id: insertRegion.insertId,
       };
       sql = `INSERT into region set ?`;
       await conn.query(sql, [dataRegion]);
@@ -137,6 +143,8 @@ module.exports = {
       latitude,
       recipient,
       phone_number,
+      province_id,
+      city_id,
       city,
       province,
     } = req.body;
@@ -158,6 +166,8 @@ module.exports = {
 
       let dataRegion = {
         province,
+        province_id,
+        city_id,
         city,
       };
       sql = `update region set ? where address_id = ?`;
@@ -166,6 +176,51 @@ module.exports = {
       return res.status(200).send({ message: "Berhasil menyimpan alamat" });
     } catch (error) {
       conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message });
+    }
+  },
+  getProvince: async (req, res) => {
+    try {
+      let provinces = await rajaOngkir.getProvinces();
+      let dataProvince = provinces.rajaongkir.results;
+      let provinceOptions = dataProvince.map((val, index) => {
+        return { value: val.province, label: val.province, ...val };
+      });
+      console.log("test");
+      // let option1 = options?.map((val, index) => {
+      //   return { warna: val.label, rasa: val.value, ...val };
+      // });
+
+      // if (provinces.rajaongkir.status.code != 200) {
+      //   throw { message: provinces.rajaongkir.status.description };
+      // }
+      // return res.status(200).send(provinces.rajaongkir.results);
+      return res.status(200).send(provinceOptions);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getcity: async (req, res) => {
+    try {
+      let cities = await rajaOngkir.getCities();
+      console.log(cities);
+      if (cities.rajaongkir.status.code != 200) {
+        throw { message: cities.rajaongkir.status.description };
+      }
+
+      let filterCities = cities.rajaongkir.results.filter((el) =>
+        el.province.toLowerCase().includes(req.params.province.toLowerCase())
+      );
+
+      let cityOptions = filterCities.map((val, index) => {
+        return { value: val.city_name, label: val.city_name, ...val };
+      });
+
+      return res.status(200).send(cityOptions);
+    } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message });
     }

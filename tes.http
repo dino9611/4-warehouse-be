@@ -60,11 +60,11 @@ Content-Type: application/json
 prod_category: 2
 
 ### 
-PATCH  http://localhost:2004/user/default-address/20 HTTP/1.1
+PATCH  http://localhost:2004/user/default-address/22 HTTP/1.1
 Content-Type: application/json
 
 {
-    "user_id" : 2
+    "user_id" : 78
 }
 ### get address
 GET http://localhost:2004/user/address/1 HTTP/1.1
@@ -88,15 +88,25 @@ DELETE  http://localhost:2004/user/address/delete/23 HTTP/1.1
 Content-Type: application/json
 
 ###
-PATCH   http://localhost:2004/user/address/edit/20 HTTP/1.1
+POST   http://localhost:2004/user/address HTTP/1.1
 Content-Type: application/json
 
 {
-         "address": "address", 
+        "address": "address", 
         "longitude":"106.97546386",
         "latitude":"-6.493272",
         "recipient":"user",
         "phone_number": "089867654",
         "province":"jawa timur",
+        "province_id":1,
+        "city_id":2,
         "city" : "bandung"       
 }
+
+###
+GET http://localhost:2004/user/address/province HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:2004/user/address/city/bengkulu HTTP/1.1
+Content-Type: application/json

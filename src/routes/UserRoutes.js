@@ -7,9 +7,13 @@ const {
   inputAddress,
   deleteAddress,
   editAddress,
+  getProvince,
+  getcity,
 } = userControllers;
 
 router.patch("/default-address/:idAddress", chooseDefaultAddress);
+router.get("/address/province", getProvince);
+router.get("/address/city/:province", getcity);
 router.get("/address/:userId", getAddress);
 router.post("/address/:userId", inputAddress);
 router.delete("/address/delete/:addressId", deleteAddress);
