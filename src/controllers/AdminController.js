@@ -29,8 +29,8 @@ module.exports = {
         parseInt(offset)
       ]);
 
-      sql = `SELECT COUNT(id) AS products_total FROM product;`;
-      let [productsTotal] = await conn.query(sql);
+      sql = `SELECT COUNT(id) AS products_total FROM product WHERE is_delete = ?;`;
+      let [productsTotal] = await conn.query(sql, 0);
       res.set("x-total-count", productsTotal[0].products_total);
 
       conn.release();
