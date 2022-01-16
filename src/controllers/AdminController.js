@@ -10,7 +10,7 @@ module.exports = {
 
     try {
       let sql = `
-            SELECT p.images, p.id, CONCAT(c.category, "-", YEAR(p.create_on), "0", p.id) AS SKU,p.name, p.category_id, c.category, p.weight, p.price, p.product_cost, total_stock, description FROM product AS p
+            SELECT p.images, p.id, CONCAT(c.category, "-", YEAR(p.create_on), "0", p.id) AS SKU, p.name, p.category_id, c.category, p.weight, p.price, p.product_cost, total_stock, description FROM product AS p
             JOIN category c
             ON p.category_id = c.id
             JOIN (SELECT product_id, SUM(stock) AS total_stock FROM stock
