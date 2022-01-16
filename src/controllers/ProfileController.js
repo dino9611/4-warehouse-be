@@ -11,7 +11,7 @@ module.exports = {
     const connDb = connection.promise();
 
     try {
-      const path = "/photo-profile";
+      const path = "/assets/images/uploaded/photo-profile";
 
       let imagePath = req.files.image
         ? `${path}/${req.files.image[0].filename}`

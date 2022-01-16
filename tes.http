@@ -54,6 +54,17 @@ GET http://localhost:2004/auth/keeplogin HTTP/1.1
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjcsInVzZXJuYW1lIjoidXNlcjkiLCJyb2xlX2lkIjozLCJpYXQiOjE2Mzg5Mzc0ODIsImV4cCI6MTYzODk4MDY4Mn0.rBT32wHA1CHGHjE3zOmCDEua_7lQUwNb7zhJ8VDuRzI
 
+###
+GET http://localhost:3004/location/shipping-fee/9 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:3004/transaction/get/cart-detail/5 HTTP/1.1
+Content-Type: application/json
+
+###
+POST http://localhost:3004/transaction/checkout HTTP/1.1
+Content-Type: application/json
 ### 
 PATCH http://localhost:2004/product/edit/10 HTTP/1.1
 Content-Type: application/json

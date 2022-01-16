@@ -1,13 +1,24 @@
 const express = require("express");
 const router = express.Router();
-const {uploader, verifyPass} = require("../helpers/");
+const { uploader, verifyPass } = require("../helpers/");
 const { connection } = require("../connection");
 const { productController } = require("./../controllers");
-const { getProdCategory, addProduct, editProdNoImg, editProdImg, deleteProdImg, listProduct, deleteProduct } = productController;
+const {
+  getProdCategory,
+  addProduct,
+  editProdNoImg,
+  editProdImg,
+  deleteProdImg,
+  listProduct,
+  getDetailedProduct,
+  deleteProduct,
+} = productController;
 
 let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product image
 
-const checkCategoryFolder = async (req, res, next) => { // Utk menentukan route folder uploaded product image by category
+const checkCategoryFolder = async (req, res, next) => {
+  // Utk menentukan route folder uploaded product image by category
+  console.log("Jalan /product/determine-category");
   const conn = await connection.promise().getConnection();
   const { prod_category } = req.body;
 
@@ -29,11 +40,13 @@ const checkCategoryFolder = async (req, res, next) => { // Utk menentukan route 
   }
 };
 
-const uploadFile = uploader(categoryFolder, "Product_").fields([ // Gunakan fields bila ingin > 1 upload file, klo 1 pake .single
+const uploadFile = uploader(categoryFolder, "Product_").fields([
+  // Gunakan fields bila ingin > 1 upload file, klo 1 pake .single
   { name: "images", maxCount: 3 }, // Key harus sama dengan yg dikirimkan dari body (FE)
 ]);
 
-const editImgCatFolder = async (req, res, next) => { // Utk menentukan route folder uploaded edit product image by category
+const editImgCatFolder = async (req, res, next) => {
+  // Utk menentukan route folder uploaded edit product image by category
   const conn = await connection.promise().getConnection();
   const { category_id } = req.headers;
   try {
@@ -43,8 +56,8 @@ const editImgCatFolder = async (req, res, next) => { // Utk menentukan route fol
 
     conn.release();
     req.categoryFolder = categoryResult[0][0].category
-    .toLowerCase()
-    .replace(/-/g, "_"); // lowercase all & regex rubah "-" jd "_"
+      .toLowerCase()
+      .replace(/-/g, "_"); // lowercase all & regex rubah "-" jd "_"
     next();
   } catch (error) {
     conn.release();
@@ -53,7 +66,8 @@ const editImgCatFolder = async (req, res, next) => { // Utk menentukan route fol
   }
 };
 
-const uploadEditImg = (req, res, next) => { // Middleware utk proses upload file edit image product
+const uploadEditImg = (req, res, next) => {
+  // Middleware utk proses upload file edit image product
   let upload = uploader(req.categoryFolder, "Product_").fields([
     { name: "images", maxCount: 3 }, // Key harus sama dengan yg dikirimkan dari body (FE)
   ]);
@@ -62,7 +76,7 @@ const uploadEditImg = (req, res, next) => { // Middleware utk proses upload file
       console.log(error);
     } else {
       next();
-    };
+    }
   });
 };
 
@@ -73,6 +87,7 @@ router.patch("/edit/:id", editProdNoImg);
 router.patch("/edit/image/:id", editImgCatFolder, uploadEditImg, editProdImg);
 router.delete("/delete/image/:id", deleteProdImg);
 router.get("/", listProduct);
+router.get("/detailed-product/:productId", getDetailedProduct);
 router.delete("/delete/:prodId", verifyPass, deleteProduct);
 
 module.exports = router;

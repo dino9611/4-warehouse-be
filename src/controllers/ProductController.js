@@ -3,7 +3,6 @@ const fs = require("fs");
 
 module.exports = {
   getProdCategory: async (req, res) => {
-    console.log("Jalan /product/category");
     const conn = await connection.promise().getConnection();
 
     try {
@@ -269,9 +268,12 @@ module.exports = {
         sortSql = ` order by price desc`;
       }
 
-      let sql = `select p.id, name, price, weight, category_id, c.category, description, images from product p
+      let sql = `select p.id, name, price, weight, category_id, c.category, total_stock, description, images from product p
       join category c
       on c.id = p.category_id
+      join (select product_id, sum(stock) as total_stock from stock
+		  group by product_id) s
+      on s.product_id = p.id
       where is_delete = 0 ${filterSql}
       ${sortSql}
       limit ?,?`;
@@ -290,6 +292,25 @@ module.exports = {
       return res.status(200).send(dataProduct);
     } catch (error) {
       console.log(error);
+    }
+  },
+
+  getDetailedProduct: async (req, res) => {
+    const connDb = connection.promise();
+
+    try {
+      let sql = `select p.id, name, price, weight, category_id, c.category, total_stock, description, images from product p
+      join category c
+      on c.id = p.category_id
+      join (select product_id, sum(stock) as total_stock from stock
+		  group by product_id) s
+      on s.product_id = p.id
+      where p.id = ? and is_delete = 0`;
+      const [dataProduct] = await connDb.query(sql, [req.params.productId]);
+
+      return res.status(200).send(dataProduct);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
     }
   },
 };
