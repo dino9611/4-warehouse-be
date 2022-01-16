@@ -12,5 +12,6 @@ module.exports = {
   productRoute: require("./ProductRoute"),
   adminRoute: require("./AdminRoute"),
   warehouseRoute: require("./WarehouseRoute"),
-  salesRoute: require("./SalesRoute")
+  salesRoute: require("./SalesRoute"),
+  userRoutes: require("./UserRoutes"),
 };
