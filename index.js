@@ -62,9 +62,7 @@ const {
 
 // Routing
 app.use("/auth", AuthRoutes);
-app.use("/admin", adminRoute);
 app.use("/profile", profileRoute);
-app.use("/auth", AuthRoutes);
 app.use("/product", productRoute);
 app.use("/admin", adminRoute);
 app.use("/warehouse", warehouseRoute);
