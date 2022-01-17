@@ -89,8 +89,7 @@ module.exports = {
     console.log("Jalan /product/edit/:id");
     const conn = await connection.promise().getConnection();
     const { id } = req.params;
-    const { name, category_id, weight, price, product_cost, description } =
-      req.body;
+    const { name, category_id, weight, price, product_cost, description } = req.body;
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
@@ -224,6 +223,34 @@ module.exports = {
           .status(200)
           .send({ message: "Delete Success (list will refresh)" });
       }
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
+  },
+  editProductStock: async (req, res) => {
+    console.log("Jalan /product/edit/stock");
+    const {warehouse_id, product_id, new_stock} = req.body
+    const conn = await connection.promise().getConnection();
+
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+
+      let sql = `INSERT INTO stock SET ?`;
+      let addStockData = {
+        warehouse_id: warehouse_id,
+        product_id: product_id,
+        stock: new_stock,
+        ready_to_sent: 0
+      };
+
+      await conn.query(sql, addStockData);
+
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      return res.status(200).send({ message: "Edit stock success!" });
     } catch (error) {
       await conn.rollback(); // Rollback data klo terjadi error/gagal
       conn.release();

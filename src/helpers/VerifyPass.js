@@ -1,5 +1,5 @@
 const { connection } = require("./../connection");
-const hashPass = require("./index");
+const hashPass = require("./HashPass");
 
 const verifyPass = async (req, res, next) => {
     const {username, pass} = req.headers;
@@ -13,9 +13,9 @@ const verifyPass = async (req, res, next) => {
         `;
         const [result] = await conn.query(sql, [
             username,
-            pass
+            // pass
             // ! Khusus sesi testing gunakan tanpa hash karena blm byk dummy data password nya pake hashpass, dapat menyebabkan salah matching password dgn db
-            // hashPass(pass) 
+            hashPass(pass) 
         ]);
 
         if (!result.length) {
