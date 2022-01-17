@@ -94,7 +94,7 @@ module.exports = {
         );
   
         let cityOptions = filterCities.map((val, index) => {
-          return { value: val.city_name, label: `${val.type} ${val.city_name}`, ...val };
+          return { value: `${val.type} ${val.city_name}`, label: `${val.type} ${val.city_name}`, ...val };
         });
   
         return res.status(200).send(cityOptions);
