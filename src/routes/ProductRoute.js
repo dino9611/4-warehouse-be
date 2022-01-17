@@ -9,6 +9,7 @@ const {
   editProdNoImg,
   editProdImg,
   deleteProdImg,
+  editProductStock,
   listProduct,
   getDetailedProduct,
   deleteProduct,
@@ -85,6 +86,7 @@ router.post("/determine-category", checkCategoryFolder);
 router.post("/add", uploadFile, addProduct(categoryFolder));
 router.patch("/edit/:id", editProdNoImg);
 router.patch("/edit/image/:id", editImgCatFolder, uploadEditImg, editProdImg);
+router.post("/edit/stock", editProductStock);
 router.delete("/delete/image/:id", deleteProdImg);
 router.get("/", listProduct);
 router.get("/detailed-product/:productId", getDetailedProduct);
