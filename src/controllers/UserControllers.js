@@ -1,6 +1,6 @@
 const { connection } = require("../connection");
 const rajaOngkir = require("rajaongkir-nodejs").Starter(
-  "9387bc437b911646faccf03eacfd0b66"
+  "61fd12d72307c3b8751b368831353d5b"
 );
 
 module.exports = {
@@ -182,12 +182,21 @@ module.exports = {
   },
   getProvince: async (req, res) => {
     try {
+      // let options = [
+      //   { value: "chocolate", label: "Chocolate" },
+      //   { value: "strawberry", label: "Strawberry" },
+      //   { value: "vanilla", label: "Vanilla" },
+      // ];
+
+      // console.log("masuk get province");
+      // return res.status(200).send(options);
       let provinces = await rajaOngkir.getProvinces();
       let dataProvince = provinces.rajaongkir.results;
       let provinceOptions = dataProvince.map((val, index) => {
         return { value: val.province, label: val.province, ...val };
       });
       console.log("test");
+
       // let option1 = options?.map((val, index) => {
       //   return { warna: val.label, rasa: val.value, ...val };
       // });
@@ -205,6 +214,13 @@ module.exports = {
 
   getcity: async (req, res) => {
     try {
+      // let options = [
+      //   { value: "chocolate", label: "Chocolate" },
+      //   { value: "strawberry", label: "Strawberry" },
+      //   { value: "vanilla", label: "Vanilla" },
+      // ];
+      // console.log("masuk get city");
+      // return res.status(200).send(options);
       let cities = await rajaOngkir.getCities();
       console.log(cities);
       if (cities.rajaongkir.status.code != 200) {
@@ -216,7 +232,11 @@ module.exports = {
       );
 
       let cityOptions = filterCities.map((val, index) => {
-        return { value: val.city_name, label: val.city_name, ...val };
+        return {
+          value: val.city_name,
+          label: `${val.type}, ${val.city_name}`,
+          ...val,
+        };
       });
 
       return res.status(200).send(cityOptions);
