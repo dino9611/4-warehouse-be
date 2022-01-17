@@ -30,7 +30,9 @@ module.exports = {
           province_id,
           province,
           city_id,
-          city
+          city,
+          warehouse_latitude,
+          warehouse_longitude
         } = req.body;
 
         try {
@@ -43,7 +45,9 @@ module.exports = {
             province_id,
             province,
             city_id,
-            city
+            city,
+            latitude: warehouse_latitude,
+            longitude: warehouse_longitude
           };
           const [addResult] = await conn.query(sql, addDataWh);
 
