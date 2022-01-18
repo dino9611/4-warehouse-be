@@ -9,7 +9,9 @@ const {
   editProdNoImg,
   editProdImg,
   deleteProdImg,
+  editProductStock,
   listProduct,
+  getDetailedProduct,
   deleteProduct,
   getDetailedProduct,
   getHotProducts,
@@ -20,6 +22,7 @@ let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product 
 
 const checkCategoryFolder = async (req, res, next) => {
   // Utk menentukan route folder uploaded product image by category
+  console.log("Jalan /product/determine-category");
   const conn = await connection.promise().getConnection();
   const { prod_category } = req.body;
 
@@ -86,6 +89,7 @@ router.post("/determine-category", checkCategoryFolder);
 router.post("/add", uploadFile, addProduct(categoryFolder));
 router.patch("/edit/:id", editProdNoImg);
 router.patch("/edit/image/:id", editImgCatFolder, uploadEditImg, editProdImg);
+router.post("/edit/stock", editProductStock);
 router.delete("/delete/image/:id", deleteProdImg);
 router.get("/", listProduct);
 router.get("/detailed-product/:productId", getDetailedProduct);

@@ -49,24 +49,26 @@ app.use(express.static("public"));
 
 // Import Routes
 const {
-  AuthRoutes,
+  authRoutes,
   productRoute,
   adminRoute,
   warehouseRoute,
   profileRoute,
+  userRoutes,
+  salesRoute,
   transactionRoute,
   locationRoute,
   historyRoute,
 } = require("./src/routes");
 
 // Routing
-app.use("/auth", AuthRoutes);
-app.use("/admin", adminRoute);
+app.use("/auth", authRoutes);
 app.use("/profile", profileRoute);
-app.use("/auth", AuthRoutes);
 app.use("/product", productRoute);
 app.use("/admin", adminRoute);
 app.use("/warehouse", warehouseRoute);
+app.use("/user", userRoutes);
+app.use("/sales", salesRoute);
 app.use("/transaction", transactionRoute);
 app.use("/location", locationRoute);
 app.use("/history", historyRoute);

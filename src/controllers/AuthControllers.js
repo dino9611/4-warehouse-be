@@ -123,7 +123,7 @@ module.exports = {
     const conn = await connection.promise().getConnection();
 
     try {
-      let sql = `select id,username,email,is_verified,role_id, profile_picture from user where (username = ? or email = ?) and password = ?`;
+      let sql = `select id,username,email,is_verified,role_id,profile_picture from user where (username = ? or email = ?) and password = ?`;
       const [userData] = await conn.query(sql, [
         username,
         username,
@@ -155,11 +155,25 @@ module.exports = {
     }
   },
   keeplogin: async (req, res) => {
-    const { id } = req.user;
+    const { id, role_id } = req.user;
     const conn = await connection.promise().getConnection();
 
     try {
       let sql = `select id,username,email,is_verified,role_id, profile_picture from user where id = ?`;
+
+      if (role_id !== 3) {
+        // Tambahan utk super admin & wh admin, karena butuh warehouse_id
+        sql = `
+          SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id, w.name AS warehouse_name FROM user AS u
+          LEFT JOIN warehouse_admin wa
+          ON u.id = wa.user_id
+          LEFT JOIN warehouse w
+          ON wa.warehouse_id = w.id
+          WHERE u.id = ?;
+        `;
+      } else {
+        sql = `select id,username,email,is_verified,role_id from user where id = ?`;
+      }
       const [userData] = await conn.query(sql, [id]);
       if (!userData.length) {
         throw { message: "username tidak ditemukan" };
@@ -257,14 +271,18 @@ module.exports = {
 
     try {
       let sql = `
-              SELECT id, username, email, is_verified, role_id FROM user 
+              SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id, w.name AS warehouse_name FROM user AS u
+              LEFT JOIN warehouse_admin wa
+              ON u.id = wa.user_id
+              LEFT JOIN warehouse w
+              ON wa.warehouse_id = w.id
               WHERE username = ? and password = ?;
             `;
       const [userData] = await conn.query(sql, [
         inputtedUsername,
-        inputtedPassword,
+        // inputtedPassword,
         // ! Khusus sesi testing gunakan tanpa hash karena blm byk dummy data password nya pake hashpass, dapat menyebabkan salah matching password dgn db
-        // hashPass(inputtedPassword)
+        hashPass(inputtedPassword),
       ]);
 
       if (!userData.length) {
@@ -276,6 +294,8 @@ module.exports = {
         id: userData[0].id,
         username: userData[0].username,
         role_id: userData[0].role_id,
+        warehouse_id: userData[0].warehouse_id,
+        warehouse_name: userData[0].warehouse_name,
       };
 
       const accessToken = createTokenAccess(dataToken);

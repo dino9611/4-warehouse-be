@@ -13,6 +13,19 @@ const {
   getTotalItemInCart,
   uploadPaymentProof,
   getDataOrders,
+  getAllTransactions,
+  getWaitPayTransactions,
+  getWaitConfirmTrans,
+  getOnProcessTrans,
+  getDelivTransactions,
+  getReceivedTransactions,
+  getFailTransactions,
+  getTransactionDetail,
+  getShippingInfo,
+  confirmRejectTransactionPay,
+  confirmRejectTransactionDelivery,
+  getTransactionStatuses,
+  getPaymentProof,
 } = transactionController;
 
 const uploadFile = uploader("/payment-proof", "PAY").fields([
@@ -29,5 +42,21 @@ router.get("/get/bank", getBank);
 router.get("/get/total-item/:userId", getTotalItemInCart);
 router.patch("/upload/payment-proof/:ordersId", uploadFile, uploadPaymentProof);
 router.get("/get/orders/:ordersId", getDataOrders);
+router.get("/all-transactions", getAllTransactions);
+router.get("/wait-pay-transactions", getWaitPayTransactions);
+router.get("/wait-confirm-transactions", getWaitConfirmTrans);
+router.get("/onprocess-transactions", getOnProcessTrans);
+router.get("/delivery-transactions", getDelivTransactions);
+router.get("/received-transactions", getReceivedTransactions);
+router.get("/fail-transactions", getFailTransactions);
+router.get("/detail", getTransactionDetail);
+router.get("/detail-shipping", getShippingInfo);
+router.patch("/confirm-payment/:transactionId", confirmRejectTransactionPay);
+router.patch(
+  "/confirm-delivery/:transactionId",
+  confirmRejectTransactionDelivery
+);
+router.get("/statuses", getTransactionStatuses);
+router.get("/payment-proof/:orderId", getPaymentProof);
 
 module.exports = router;

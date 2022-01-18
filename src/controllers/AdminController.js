@@ -10,7 +10,7 @@ module.exports = {
 
     try {
       let sql = `
-            SELECT p.images, p.id, CONCAT(c.category, "-", YEAR(p.create_on), "0", p.id) AS SKU,p.name, p.category_id, c.category, p.weight, p.price, p.product_cost, total_stock, description FROM product AS p
+            SELECT p.images, p.id, CONCAT(c.category, "-", YEAR(p.create_on), "0", p.id) AS SKU, p.name, p.category_id, c.category, p.weight, p.price, p.product_cost, total_stock, description FROM product AS p
             JOIN category c
             ON p.category_id = c.id
             JOIN (SELECT product_id, SUM(stock) AS total_stock FROM stock
@@ -29,8 +29,8 @@ module.exports = {
         parseInt(offset)
       ]);
 
-      sql = `SELECT COUNT(id) AS products_total FROM product`;
-      let [productsTotal] = await conn.query(sql);
+      sql = `SELECT COUNT(id) AS products_total FROM product WHERE is_delete = ?;`;
+      let [productsTotal] = await conn.query(sql, 0);
       res.set("x-total-count", productsTotal[0].products_total);
 
       conn.release();
@@ -124,6 +124,46 @@ module.exports = {
 
       conn.release();
       return res.status(200).send(productResult[0]);
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    };
+  },
+  getWarehouseProducts: async (req, res) => {
+    console.log("Jalan /admin/warehouse-product/pagination");
+    const conn = await connection.promise().getConnection();
+    const { page, limit, whid } = req.query; // Dari frontend
+    let offset = page * limit; // Semacam utk slice data, start data drimana
+
+    try {
+      let sql = `
+            SELECT p.images, p.id, CONCAT(c.category, "-", YEAR(p.create_on), "0", p.id) AS SKU, p.name, c.category, p.price, IFNULL(total_stock, 0) AS warehouse_stock, description FROM product AS p
+            JOIN category c
+            ON p.category_id = c.id
+            LEFT JOIN (SELECT product_id, IFNULL(SUM(stock), 0) AS total_stock FROM stock
+            WHERE ready_to_sent = ? AND warehouse_id = ?
+            GROUP BY product_id) AS s
+            ON s.product_id = p.id
+            WHERE is_delete = ?
+            GROUP BY p.id
+            ORDER BY p.id
+            LIMIT ? OFFSET ?;
+        `;
+      const [productsResult] = await conn.query(sql, [
+        0,
+        parseInt(whid),
+        0,
+        parseInt(limit),
+        parseInt(offset)
+      ]);
+
+      sql = `SELECT COUNT(id) AS products_total FROM product WHERE is_delete = ?;`;
+      let [productsTotal] = await conn.query(sql, 0);
+      res.set("x-total-count", productsTotal[0].products_total);
+
+      conn.release();
+      return res.status(200).send(productsResult);
     } catch (error) {
       conn.release();
       console.log(error);
