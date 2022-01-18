@@ -347,7 +347,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -361,7 +361,7 @@ module.exports = {
         queryParameter = [parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -428,7 +428,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -443,7 +443,7 @@ module.exports = {
         queryParameter = [1, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -522,7 +522,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -537,7 +537,7 @@ module.exports = {
         queryParameter = [2, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -616,7 +616,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -631,7 +631,7 @@ module.exports = {
         queryParameter = [3, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -710,7 +710,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -725,7 +725,7 @@ module.exports = {
         queryParameter = [4, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -804,7 +804,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -819,7 +819,7 @@ module.exports = {
         queryParameter = [5, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -898,7 +898,7 @@ module.exports = {
 
       if (parseInt(roleid) === 1) {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
@@ -913,7 +913,7 @@ module.exports = {
         queryParameter = [6, 7, parseInt(limit), parseInt(offset)];
       } else {
         sql = `
-          SELECT o.id, o.status_id, so.status, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
+          SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
           JOIN orders o
           ON so.id = o.status_id
           JOIN order_detail od
