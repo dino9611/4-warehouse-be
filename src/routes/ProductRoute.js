@@ -11,7 +11,6 @@ const {
   deleteProdImg,
   editProductStock,
   listProduct,
-  getDetailedProduct,
   deleteProduct,
   getDetailedProduct,
   getHotProducts,
