@@ -182,8 +182,7 @@ module.exports = {
     const conn = await connection.promise().getConnection();
 
     try {
-      let sql = `select id,username,email,is_verified,role_id, profile_picture from user where id = ?`;
-
+      let sql;
       if (role_id !== 3) {
         // Tambahan utk super admin & wh admin, karena butuh warehouse_id
         sql = `

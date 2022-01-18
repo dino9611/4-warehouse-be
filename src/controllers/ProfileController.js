@@ -7,30 +7,11 @@ const path = require("path");
 const handleBars = require("handlebars");
 
 module.exports = {
-  uploadProfilePicture: async (req, res) => {
-    const connDb = connection.promise();
-
-    try {
-      const path = "/assets/images/uploaded/photo-profile";
-
-      let imagePath = req.files.image
-        ? `${path}/${req.files.image[0].filename}`
-        : null;
-
-      let sql = `update user set profile_picture = ? where id = ? and role_id = 3`;
-      await connDb.query(sql, [imagePath, req.params.userId]);
-
-      return res.status(200).send({ message: "Foto telah dirubah" });
-    } catch (error) {
-      return res.status(500).send({ message: error.message });
-    }
-  },
-
   getPersonalData: async (req, res) => {
     const connDb = connection.promise();
 
     try {
-      let sql = `select username, first_name, profile_picture, last_name, email, gender, date_of_birth from user where id = ?`;
+      let sql = `select username, first_name, profile_picture, last_name, email, phone_number, gender, date_of_birth from user where id = ?`;
       let [personalData] = await connDb.query(sql, [req.params.userId]);
 
       return res.status(200).send(personalData);
@@ -41,14 +22,46 @@ module.exports = {
   },
 
   inputPersonalData: async (req, res) => {
-    const connDb = connection.promise();
+    const connDb = await connection.promise().getConnection();
 
     try {
-      let sql = `update user set ? where id = ? and role_id = 3`;
-      await connDb.query(sql, [req.body, req.params.userId]);
+      let sql = `select profile_picture from user where id = ?`;
+      let [profPic] = await connDb.query(sql, req.params.userId);
 
-      return res.status(200).send({ message: "Data berhasil disimpan" });
+      let imagePath;
+
+      if (!req.files.image) {
+        imagePath = req.body.data.profile_picture;
+
+        if (profPic[0].profile_picture) {
+          fs.unlinkSync("./public" + profPic[0].profile_picture);
+        }
+      } else {
+        if (profPic[0].profile_picture) {
+          fs.unlinkSync("./public" + profPic[0].profile_picture);
+        }
+
+        const path = "/assets/images/uploaded/photo-profile";
+
+        imagePath = req.files.image
+          ? `${path}/${req.files.image[0].filename}`
+          : null;
+      }
+
+      let data = JSON.parse(req.body.data);
+
+      const dataInput = {
+        ...data,
+        profile_picture: imagePath,
+      };
+
+      sql = `update user set ? where id = ? and role_id = 3`;
+      let [dataUser] = await connDb.query(sql, [dataInput, req.params.userId]);
+
+      return res.status(200).send({ message: imagePath });
     } catch (error) {
+      console.log(error);
+      connDb.release();
       return res.status(500).send({ message: error.message });
     }
   },
@@ -63,9 +76,9 @@ module.exports = {
 
       let sql = `select id from user where password = ? and role_id = 3`;
       let [cekPass] = await connDb.query(sql, [hashPass(req.body.currentPass)]);
-      console.log(cekPass);
+
       if (!cekPass.length) {
-        return res.send(cekPass);
+        return res.status(200).send(cekPass);
       }
 
       sql = `update user set password = ? where id = ? and role_id = 3`;
@@ -76,6 +89,7 @@ module.exports = {
       return res.status(200).send(cekPass);
     } catch (error) {
       connDb.release();
+      console.log(error);
       return res.status(500).send({ message: error.message });
     }
   },

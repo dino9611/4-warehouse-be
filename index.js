@@ -39,6 +39,7 @@ app.use(
       "x-token-refresh",
       "x-total-count",
       "x-token-email",
+      "x-total-order",
     ], // To put token in headers
   })
 );
@@ -58,7 +59,7 @@ const {
   transactionRoute,
   locationRoute,
   historyRoute,
-  userRoutes,
+  stockRoute,
 } = require("./src/routes");
 
 // Routing
@@ -72,6 +73,6 @@ app.use("/sales", salesRoute);
 app.use("/transaction", transactionRoute);
 app.use("/location", locationRoute);
 app.use("/history", historyRoute);
-app.use("/user", userRoutes);
+app.use("/stock", stockRoute);
 
 app.listen(PORT, () => console.log(`API running ${PORT}`));
