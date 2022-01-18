@@ -89,8 +89,7 @@ module.exports = {
     console.log("Jalan /product/edit/:id");
     const conn = await connection.promise().getConnection();
     const { id } = req.params;
-    const { name, category_id, weight, price, product_cost, description } =
-      req.body;
+    const { name, category_id, weight, price, product_cost, description } = req.body;
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
@@ -231,6 +230,34 @@ module.exports = {
       return res.status(500).send({ message: error.message || "Server error" });
     }
   },
+  editProductStock: async (req, res) => {
+    console.log("Jalan /product/edit/stock");
+    const {warehouse_id, product_id, new_stock} = req.body
+    const conn = await connection.promise().getConnection();
+
+    try {
+      await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
+
+      let sql = `INSERT INTO stock SET ?`;
+      let addStockData = {
+        warehouse_id: warehouse_id,
+        product_id: product_id,
+        stock: new_stock,
+        ready_to_sent: 0
+      };
+
+      await conn.query(sql, addStockData);
+
+      await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
+      conn.release();
+      return res.status(200).send({ message: "Edit stock success!" });
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
+  },
 
   // LIST PRODUK USER PAGE (GANGSAR)
 
@@ -309,6 +336,64 @@ module.exports = {
       const [dataProduct] = await connDb.query(sql, [req.params.productId]);
 
       return res.status(200).send(dataProduct);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getHotProducts: async (req, res) => {
+    const connDb = connection.promise();
+
+    try {
+      let sql = `select p.id, p.name, p.price, p.weight, c.category, p.product_cost, p.description, p.images,  sum(qty) as total_qty, total_stock from product p
+      join order_detail od
+      on od.product_id = p.id
+      join orders o
+      on o.id = od.orders_id
+      join category c
+      on c.id = p.category_id
+      join (select product_id, sum(stock) as total_stock from stock
+      group by product_id) s
+      on s.product_id = p.id
+      where o.status_id not in (1,2) and p.is_delete = 0 and total_stock != 0
+      group by od.product_id
+      order by total_qty desc
+      limit 5`;
+      const [hotProducts] = await connDb.query(sql);
+
+      return res.status(200).send(hotProducts);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getProductBycategory: async (req, res) => {
+    const connDb = connection.promise();
+
+    try {
+      // let sql = `select p.id, name, price, weight, category_id, c.category, total_stock, description, images from product p
+      // join category c
+      // on c.id = p.category_id
+      // join (select product_id, sum(stock) as total_stock from stock
+      // group by product_id) s
+      // on s.product_id = p.id
+      // where category_id = ? and is_delete = 0 and total_stock != 0`;
+
+      // INI BUAT SEMENTARA OKE, YANG BENER YANG ATAS
+      let sql = `select p.id, name, price, weight, category_id, c.category, total_stock, description, images from product p
+      join category c
+      on c.id = p.category_id
+      left join (select product_id, sum(stock) as total_stock from stock
+      group by product_id) s
+      on s.product_id = p.id
+      where category_id = ? and is_delete = 0
+      limit ?`;
+      const [dataProductByCategory] = await connDb.query(sql, [
+        req.params.categoryId,
+        parseInt(req.query.limit),
+      ]);
+
+      return res.status(200).send(dataProductByCategory);
     } catch (error) {
       return res.status(500).send({ message: error.message });
     }

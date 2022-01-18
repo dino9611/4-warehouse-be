@@ -26,7 +26,7 @@ module.exports = {
         cartId = cartUser[0].id;
       }
 
-      sql = `select id, qty from cart_detail where cart_id = ? and product_id = ?`;
+      sql = `select id, qty from cart_detail where cart_id = ? and product_id = ? and is_deleted = 0`;
       let [cartDetail] = await connDb.query(sql, [cartId, product_id]);
 
       sql = `select p.id, total_stock from product p
@@ -80,6 +80,10 @@ module.exports = {
       let sql = `select id from cart where user_id = ? and is_checkout = 0`;
       let [dataCart] = await connDb.query(sql, req.params.userId);
 
+      if (!dataCart.length) {
+        return res.status(200).send(errorStock);
+      }
+
       sql = `select product_id, qty from cart_detail where cart_id = ? and is_deleted = 0`;
       let [dataCartDetail] = await connDb.query(sql, dataCart[0].id);
 
@@ -89,16 +93,15 @@ module.exports = {
 
         if (dataCartDetail[i].qty > parseInt(dataStock[0]?.total_stock)) {
           errorStock.push(dataCartDetail[i].product_id);
-          console.log("tes");
         }
       }
-      console.log(errorStock);
+
       connDb.release();
 
       return res.status(200).send(errorStock);
     } catch (error) {
       connDb.release();
-      console.log(error);
+
       return res.status(500).send({ message: error.message });
     }
   },
@@ -119,21 +122,44 @@ module.exports = {
       group by product_id) s
       on s.product_id = cd.product_id
       where cart_id = ? and is_deleted = 0`;
-      let [dataCartDetail] = await connDb.query(sql, [dataCart[0].id]);
+      let [dataCartDetail] = await connDb.query(sql, [dataCart[0]?.id]);
 
       connDb.release();
 
       return res.status(200).send(dataCartDetail);
     } catch (error) {
       connDb.release();
+
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getTotalItemInCart: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      let sql = `select id from cart where user_id = ? and is_checkout = 0`;
+      let [dataCart] = await connDb.query(sql, [req.params.userId]);
+
+      if (!dataCart.length) {
+        return;
+      }
+      sql = `select sum(qty) as total_item from cart_detail
+      where cart_id = ? and is_deleted = 0`;
+      let [totalItem] = await connDb.query(sql, dataCart[0].id);
+      console.log(totalItem);
+      connDb.release();
+
+      return res.status(200).send(totalItem[0].total_item);
+    } catch (error) {
+      connDb.release();
+
       return res.status(500).send({ message: error.message });
     }
   },
 
   deleteProductInCart: async (req, res) => {
     const connDb = connection.promise();
-
-    console.log(req.params.cartDetailId);
 
     try {
       let sql = `update cart_detail set is_deleted = 1 where id = ?`;
@@ -164,9 +190,10 @@ module.exports = {
       user_id,
       cart_id,
       shipping_fee,
-      destination,
+      address_id,
       bank_id,
       warehouse_id,
+      courier,
     } = req.body;
 
     try {
@@ -175,7 +202,7 @@ module.exports = {
       if (
         !user_id &&
         !shipping_fee &&
-        !destination &&
+        !address_id &&
         !bank_id &&
         !warehouse_id
       ) {
@@ -184,17 +211,18 @@ module.exports = {
 
       // Update is_checkout pada table cart menjadi 1
 
-      sql = `update cart set ? where user_id = ? and is_checkout = 0`;
-      await connDb.query(sql, [{ is_checkout: 1 }, user_id]);
+      sql = `update cart set is_checkout = 1 where user_id = ? and is_checkout = 0`;
+      await connDb.query(sql, [user_id]);
 
       // Insert data baru ke tabel order
 
       let dataOrder = {
         user_id,
         shipping_fee,
-        destination,
+        address_id,
         bank_id,
         warehouse_id,
+        courier,
       };
 
       sql = `insert into orders set ?`;
@@ -233,13 +261,15 @@ module.exports = {
 
       await connDb.commit();
 
-      return res
-        .status(200)
-        .send({ data: cart_id, message: "Berhasil checkout" });
+      return res.status(200).send({
+        data: cart_id,
+        ordersId: order.insertId,
+        message: "Berhasil checkout",
+      });
     } catch (error) {
       connDb.release();
       await connDb.rollback();
-      console.log(error);
+
       return res.status(500).send({ message: error.message });
     }
   },
@@ -257,6 +287,54 @@ module.exports = {
     }
   },
 
+  uploadPaymentProof: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      const path = "/assets/images/uploaded/payment-proof";
+
+      imagePath = req.files.image
+        ? `${path}/${req.files.image[0].filename}`
+        : null;
+
+      const dataPaymentProof = {
+        status_id: 2,
+        payment_proof: imagePath,
+      };
+
+      let sql = `update orders set ? where id = ?`;
+      await connDb.query(sql, [dataPaymentProof, req.params.ordersId]);
+
+      sql = `select payment_proof from orders where id = ?`;
+      let [paymentProof] = await connDb.query(sql, req.params.ordersId);
+
+      return res.status(200).send(paymentProof[0]);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getDataOrders: async (req, res) => {
+    const connDb = connection.promise();
+
+    try {
+      let sql = `select o.create_on, b.name, b.account_number, a.phone_number, (od.qty * p.price) as total_price, o.shipping_fee from order_detail od
+      join orders o
+      on o.id = od.orders_id
+      join product p 
+      on p.id = od.product_id
+      join bank b
+      on b.id = o.bank_id
+      join address a
+      on a.id = o.address_id
+      where orders_id = ?`;
+      let [dataOrders] = await connDb.query(sql, req.params.ordersId);
+
+      return res.status(200).send(dataOrders);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  },
   getAllTransactions: async (req, res) => {
     console.log("Jalan /transaction/all-transactions");
     const conn = await connection.promise().getConnection();
@@ -842,7 +920,7 @@ module.exports = {
           ON o.id = od.orders_id
           JOIN warehouse w
           ON o.warehouse_id = w.id
-          WHERE o.status_id = ? OR o.status_id = ? AND o.warehouse_id = ?
+          WHERE o.status_id IN(?, ?) AND o.warehouse_id = ?
           GROUP BY od.orders_id
           ORDER BY transaction_date DESC
           LIMIT ? OFFSET ?;
@@ -935,6 +1013,7 @@ module.exports = {
         0,
         parseInt(id),
       ]);
+<<<<<<< HEAD
 
       for (let i = 0; i < transactionDetailResult.length; i++) {
         if (transactionDetailResult[i].stock_status === "Sufficient") {
@@ -965,12 +1044,17 @@ module.exports = {
         }
       }
       console.log(transactionDetailResult);
+=======
+>>>>>>> origin/develop
 
       conn.release();
       return res.status(200).send(transactionDetailResult);
     } catch (error) {
       conn.release();
+<<<<<<< HEAD
       console.log(error.message);
+=======
+>>>>>>> origin/develop
       console.log(error);
       return res.status(500).send({ message: error.message || "Server error" });
     }
@@ -1001,11 +1085,12 @@ module.exports = {
       return res.status(500).send({ message: error.message || "Server error" });
     }
   },
-  confirmTransactionPay: async (req, res) => {
+  confirmRejectTransactionPay: async (req, res) => {
     console.log("Jalan /transaction/confirm-payment");
     const conn = await connection.promise().getConnection();
     const { transactionId } = req.params; // Dari frontend
-    const { actionIdentifier } = req.body; // Dari frontend
+    const { actionIdentifier } = req.body;
+    //! Dari frontend actionIdentifier "Accept" = 1 - true, "Reject" = 0 - false
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
@@ -1016,14 +1101,37 @@ module.exports = {
       `;
 
       let statusIdParams;
+<<<<<<< HEAD
       actionIdentifier === 1 ? (statusIdParams = 3) : (statusIdParams = 6);
+=======
+      actionIdentifier ? (statusIdParams = 3) : (statusIdParams = 6);
+>>>>>>> origin/develop
 
       await conn.query(sql, [statusIdParams, parseInt(transactionId)]);
 
       let responseMessage = "";
+<<<<<<< HEAD
       actionIdentifier === 1
         ? (responseMessage = "Transaction accepted")
         : (responseMessage = "Transaction rejected");
+=======
+      actionIdentifier
+        ? (responseMessage = "Transaction accepted")
+        : (responseMessage = "Transaction rejected");
+
+      if (!actionIdentifier) {
+        sql = `
+          DELETE FROM stock
+          WHERE orders_id = ?;
+        `;
+
+        await conn.query(sql, parseInt(transactionId));
+
+        await conn.commit();
+        conn.release();
+        return res.status(200).send({ message: responseMessage });
+      }
+>>>>>>> origin/develop
 
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
@@ -1035,7 +1143,7 @@ module.exports = {
       return res.status(500).send({ message: error.message || "Server error" });
     }
   },
-  confirmTransactionDelivery: async (req, res) => {
+  confirmRejectTransactionDelivery: async (req, res) => {
     console.log("Jalan /transaction/confirm-delivery");
     const conn = await connection.promise().getConnection();
     const { actionIdentifier, warehouseId, orderId } = req.body; // Dari frontend
@@ -1071,7 +1179,11 @@ module.exports = {
         ]);
 
         const isAllSufficient = (currentValue) =>
+<<<<<<< HEAD
           currentValue.qty <= currentValue.total_stock;
+=======
+          currentValue.qty < currentValue.total_stock;
+>>>>>>> origin/develop
         const stockCheck = validationResult.every(isAllSufficient);
         // ! Digunakan utk validasi ulang stok stlh klik button "Send", apakah stok cukup/tidak, dikhawatirkan terjadi perubahan stok real-time saat klik button
 
@@ -1100,9 +1212,17 @@ module.exports = {
           // * Bila validasi cek stok = false (stok pesanan tidak mencukupi)
           await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
           conn.release();
+<<<<<<< HEAD
           return res.status(200).send({
             message: `Stock change occurred during confirmation, please re-check stock/request stock`,
           });
+=======
+          return res
+            .status(200)
+            .send({
+              message: `Stock change occurred during confirmation, please re-check stock/request stock`,
+            });
+>>>>>>> origin/develop
         }
       } else {
         // ? Bila warehouse admin pada frontend klik button "Reject"

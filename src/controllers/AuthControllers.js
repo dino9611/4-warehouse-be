@@ -123,7 +123,7 @@ module.exports = {
     const conn = await connection.promise().getConnection();
 
     try {
-      let sql = `select id,username,email,is_verified,role_id from user where (username = ? or email = ?) and password = ?`;
+      let sql = `select id,username,email,is_verified,role_id,profile_picture from user where (username = ? or email = ?) and password = ?`;
       const [userData] = await conn.query(sql, [
         username,
         username,
@@ -163,9 +163,11 @@ module.exports = {
       if (role_id !== 3) {
         // Tambahan utk super admin & wh admin, karena butuh warehouse_id
         sql = `
-          SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id FROM user AS u
+          SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id, w.name AS warehouse_name FROM user AS u
           LEFT JOIN warehouse_admin wa
           ON u.id = wa.user_id
+          LEFT JOIN warehouse w
+          ON wa.warehouse_id = w.id
           WHERE u.id = ?;
         `;
       } else {
@@ -268,16 +270,18 @@ module.exports = {
 
     try {
       let sql = `
-              SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id FROM user AS u
+              SELECT u.id, u.username, u.email, u.is_verified, u.role_id, wa.warehouse_id, w.name AS warehouse_name FROM user AS u
               LEFT JOIN warehouse_admin wa
               ON u.id = wa.user_id
+              LEFT JOIN warehouse w
+              ON wa.warehouse_id = w.id
               WHERE username = ? and password = ?;
             `;
       const [userData] = await conn.query(sql, [
         inputtedUsername,
         // inputtedPassword,
         // ! Khusus sesi testing gunakan tanpa hash karena blm byk dummy data password nya pake hashpass, dapat menyebabkan salah matching password dgn db
-        inputtedPassword,
+        hashPass(inputtedPassword),
       ]);
 
       if (!userData.length) {
