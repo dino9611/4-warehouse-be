@@ -9,6 +9,7 @@ const salesController = require("./SalesController");
 const transactionController = require("./TransactionController");
 const locationController = require("./LocationController");
 const HistoryController = require("./HistoryController");
+const StockController = require("./StockController");
 
 module.exports = {
   profileController,
@@ -23,4 +24,5 @@ module.exports = {
   transactionController,
   locationController,
   HistoryController,
+  StockController,
 };
