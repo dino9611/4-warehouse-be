@@ -76,9 +76,9 @@ module.exports = {
 
       let sql = `select id from user where password = ? and role_id = 3`;
       let [cekPass] = await connDb.query(sql, [hashPass(req.body.currentPass)]);
-      console.log(cekPass);
+
       if (!cekPass.length) {
-        return res.send(cekPass);
+        return res.status(200).send(cekPass);
       }
 
       sql = `update user set password = ? where id = ? and role_id = 3`;
@@ -89,6 +89,7 @@ module.exports = {
       return res.status(200).send(cekPass);
     } catch (error) {
       connDb.release();
+      console.log(error);
       return res.status(500).send({ message: error.message });
     }
   },

@@ -44,7 +44,7 @@ module.exports = {
     const connDb = connection.promise();
 
     try {
-      let sql = `select so.id as status_orderId, o.create_on, o.courier, o.shipping_fee, o.payment_proof, a.recipient, a.address, a.phone_number, r.city, r.province, p.images, p.name as name_prod, p.price, od.qty, b.name  from order_detail od
+      let sql = `select so.id, o.status_id, o.create_on, o.courier, o.shipping_fee, o.payment_proof, a.recipient, a.address, a.phone_number, r.city, r.province, p.images, p.name as name_prod, p.price, od.qty, b.name  from order_detail od
       join orders o
       on o.id = od.orders_id
       join product p
@@ -59,7 +59,7 @@ module.exports = {
       on b.id = o.bank_id
       where o.id = ?`;
       let [dataOrderDetail] = await connDb.query(sql, req.params.ordersId);
-
+      console.log("orderdetail", dataOrderDetail);
       return res.status(200).send(dataOrderDetail);
     } catch (error) {
       console.log(error);
@@ -75,6 +75,21 @@ module.exports = {
       let [statusOrder] = await connDb.query(sql);
 
       return res.status(200).send(statusOrder);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  itemDelivered: async (req, res) => {
+    const connDb = connection.promise();
+
+    try {
+      let sql = `update orders set status_id = 5 where id = ?`;
+      await connDb.query(sql, req.params.ordersId);
+
+      return res
+        .status(200)
+        .send({ message: "Pesanan berhasil diterima! Terima kasih" });
     } catch (error) {
       return res.status(500).send({ message: error.message });
     }

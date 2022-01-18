@@ -101,7 +101,7 @@ module.exports = {
       return res.status(200).send(errorStock);
     } catch (error) {
       connDb.release();
-      console.log(error);
+
       return res.status(500).send({ message: error.message });
     }
   },
@@ -122,13 +122,14 @@ module.exports = {
       group by product_id) s
       on s.product_id = cd.product_id
       where cart_id = ? and is_deleted = 0`;
-      let [dataCartDetail] = await connDb.query(sql, [dataCart[0].id]);
+      let [dataCartDetail] = await connDb.query(sql, [dataCart[0]?.id]);
 
       connDb.release();
 
       return res.status(200).send(dataCartDetail);
     } catch (error) {
       connDb.release();
+
       return res.status(500).send({ message: error.message });
     }
   },
@@ -146,13 +147,13 @@ module.exports = {
       sql = `select sum(qty) as total_item from cart_detail
       where cart_id = ? and is_deleted = 0`;
       let [totalItem] = await connDb.query(sql, dataCart[0].id);
-
+      console.log(totalItem);
       connDb.release();
 
       return res.status(200).send(totalItem[0].total_item);
     } catch (error) {
       connDb.release();
-      console.log(error);
+
       return res.status(500).send({ message: error.message });
     }
   },
@@ -268,7 +269,7 @@ module.exports = {
     } catch (error) {
       connDb.release();
       await connDb.rollback();
-      console.log(error);
+
       return res.status(500).send({ message: error.message });
     }
   },
@@ -317,7 +318,16 @@ module.exports = {
     const connDb = connection.promise();
 
     try {
-      let sql = `select create_on, bank_id, shipping_fee from orders where id = ?`;
+      let sql = `select o.create_on, b.name, b.account_number, a.phone_number, (od.qty * p.price) as total_price, o.shipping_fee from order_detail od
+      join orders o
+      on o.id = od.orders_id
+      join product p 
+      on p.id = od.product_id
+      join bank b
+      on b.id = o.bank_id
+      join address a
+      on a.id = o.address_id
+      where orders_id = ?`;
       let [dataOrders] = await connDb.query(sql, req.params.ordersId);
 
       return res.status(200).send(dataOrders);

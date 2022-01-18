@@ -49,14 +49,11 @@ module.exports = {
       let sql = `select id from address where user_id = ? and is_main_address = 1`;
       let [dataMainAddress] = await connDb.query(sql, [req.body.user_id]);
 
-      sql = `update address set ? where id = ?`;
-      await connDb.query(sql, [{ is_main_address: 0 }, dataMainAddress[0].id]);
+      sql = `update address set is_main_address = 0 where id = ?`;
+      await connDb.query(sql, [dataMainAddress[0].id]);
 
-      sql = `update address set ? where id = ?`;
-      let [newMain] = await connDb.query(sql, [
-        { is_main_address: 1 },
-        req.body.id,
-      ]);
+      sql = `update address set is_main_address = 1 where id = ?`;
+      await connDb.query(sql, [req.body.id]);
 
       sql = `select a.id, recipient, phone_number ,address, latitude, longitude, province, province_id, city, city_id, is_main_address from address a
       join region r
@@ -87,6 +84,12 @@ module.exports = {
       where a.id = ?`;
       let [userAddress] = await connDb.query(sql, [req.params.addressId]);
 
+      sql = `select sum(weight) as total_weight from cart_detail cd
+      join product p
+      on p.id = cd.product_id
+      where cd.cart_id = ? and cd.is_deleted = 0`;
+      let [totalBerat] = await connDb.query(sql, [req.query.cartId]);
+
       sql = `select id, name, address, province, province_id, city, city_id, latitude, longitude from warehouse`;
       let [warehouseAddress] = await connDb.query(sql);
 
@@ -95,7 +98,7 @@ module.exports = {
       var params = {
         origin: findNearest.city_id, // ID Kota atau Kabupaten Asal
         destination: userAddress[0].city_id, // ID Kota atau Kabupaten Tujuan
-        weight: 250, // Berat Barang dalam gram (gr)
+        weight: totalBerat[0].total_weight, // Berat Barang dalam gram (gr)
       };
 
       let res1 = await RajaOngkir.getJNECost(params);
@@ -113,7 +116,13 @@ module.exports = {
     try {
       let provinces = await RajaOngkir.getProvinces();
 
-      return res.status(200).send(provinces.rajaongkir.results);
+      let provincesSelect = provinces.rajaongkir.results.map((el) => {
+        return { ...el, label: el.province };
+      });
+
+      console.log(provincesSelect);
+
+      return res.status(200).send(provincesSelect);
     } catch (error) {
       return res.status(500).send({ message: error.message });
     }
