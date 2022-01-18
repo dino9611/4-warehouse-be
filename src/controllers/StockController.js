@@ -17,10 +17,10 @@ module.exports = {
 
       sql = `select warehouse_id, w.name, w.address, IFNULL(total_stock, 0) as stocks, latitude, longitude, 0 as request_qty from warehouse w
         join (select sum(stock) as total_stock, warehouse_id from stock
-        where product_id = ?
+        where product_id = ? and ready_to_sent = 0
         group by warehouse_id) s
         on s.warehouse_id = w.id
-        where not id = ?`;
+        where not id = ? `;
       let [listWarehouse] = await connDb.query(sql, [
         req.query.productId,
         warehouseId[0].warehouse_id,
@@ -39,6 +39,7 @@ module.exports = {
       });
     } catch (error) {
       connDb.release();
+      console.log(error);
       return res.status(500).send({ message: error.message });
     }
   },

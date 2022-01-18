@@ -6,6 +6,8 @@ const verifyToken = require("./VerifyToken");
 const verifyEmailToken = require("./VerifyToken");
 const uploader = require("./Uploader");
 const verifyPass = require("./VerifyPass");
+const createTokenForgetPass = require("./CreateTokenForgetPass");
+const verifyTokenForgetPass = require("./VerifyTokenForgetPass");
 
 module.exports = {
   hashPass,
@@ -14,4 +16,6 @@ module.exports = {
   verifyToken,
   uploader,
   verifyPass,
+  createTokenForgetPass,
+  verifyTokenForgetPass,
 };

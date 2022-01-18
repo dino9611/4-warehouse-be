@@ -1,6 +1,12 @@
 const { connection } = require("./../connection");
 const handlebars = require("handlebars");
-const { hashPass, createToken, transporter } = require("./../helpers");
+const {
+  hashPass,
+  createToken,
+  transporter,
+  createTokenForgetPass,
+  verifyTokenForgetPass,
+} = require("./../helpers");
 const { createTokenAccess, createTokenEmailVerified, createTokenVerified } =
   createToken;
 const path = require("path");
@@ -305,6 +311,106 @@ module.exports = {
       conn.release();
       console.log(error);
       return res.status(500).send({ message: error.message || "Server Error" });
+    }
+  },
+
+  checkEmail: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      let sql = `select id, username, email from user where email = ?`;
+      const [dataUser] = await connDb.query(sql, req.body.email);
+
+      if (!dataUser.length) throw { message: "Email tidak terdaftar" };
+
+      const dataVerif = {
+        id: dataUser[0].id,
+        username: dataUser[0].username,
+        email: dataUser[0].email,
+        create_on: new Date().getTime(),
+      };
+
+      myCache.set(dataVerif.id, dataVerif, 300);
+
+      const value = myCache.get(dataVerif.id);
+
+      if (!value) {
+        throw { message: "data tidak sesuai" };
+      }
+
+      const token = createTokenForgetPass(dataVerif);
+
+      let filepath = path.resolve(
+        __dirname,
+        "../template/EmailForgetPass.html"
+      );
+
+      let htmlString = fs.readFileSync(filepath, "utf-8");
+      const template = handlebars.compile(htmlString);
+      const htmlToEmail = template({
+        name: dataVerif.username,
+        token: token,
+      });
+
+      transporter.sendMail({
+        from: "Admin <gangsar45@gmail.com>",
+        to: req.body.email,
+        subject: "Lupa Password",
+        html: htmlToEmail,
+      });
+
+      connDb.release();
+
+      return res.status(200).send({ message: "Email terdaftar" });
+    } catch (error) {
+      connDb.release();
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  verifyForgetPass: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      const value = myCache.get(req.user.id);
+
+      if (!value) throw { message: "Data tidak sesuai" };
+
+      if (req.user.create_on !== value.create_on)
+        throw {
+          message:
+            "Token Telah habis, kirim ulang email untuk mengulang kembali",
+        };
+
+      connDb.release();
+
+      return res.status(200).send({ id: req.user.id });
+    } catch (error) {
+      connDb.release();
+
+      return res.status(500).send({ message: error.message || "Server eror" });
+    }
+  },
+
+  forgetPassword: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      const dataPass = {
+        password: hashPass(req.body.password),
+      };
+
+      let sql = `update user set ? where id = ?`;
+      await connDb.query(sql, [dataPass, req.body.id]);
+
+      connDb.release();
+
+      return res
+        .status(200)
+        .send({ message: "Berhasil me-reset password kamu" });
+    } catch (error) {
+      connDb.release();
+      return res.status(500).send({ message: error.message });
     }
   },
 };
