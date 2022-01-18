@@ -89,7 +89,8 @@ module.exports = {
     console.log("Jalan /product/edit/:id");
     const conn = await connection.promise().getConnection();
     const { id } = req.params;
-    const { name, category_id, weight, price, product_cost, description } = req.body;
+    const { name, category_id, weight, price, product_cost, description } =
+      req.body;
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
@@ -232,7 +233,7 @@ module.exports = {
   },
   editProductStock: async (req, res) => {
     console.log("Jalan /product/edit/stock");
-    const {warehouse_id, product_id, new_stock} = req.body
+    const { warehouse_id, product_id, new_stock } = req.body;
     const conn = await connection.promise().getConnection();
 
     try {
@@ -243,7 +244,7 @@ module.exports = {
         warehouse_id: warehouse_id,
         product_id: product_id,
         stock: new_stock,
-        ready_to_sent: 0
+        ready_to_sent: 0,
       };
 
       await conn.query(sql, addStockData);
