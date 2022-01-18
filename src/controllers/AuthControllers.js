@@ -13,6 +13,17 @@ const strengthPass = (password) => {
   let result = strengthReq.test(password);
   return result;
 };
+const validUsername = (username) => {
+  let validReq = new RegExp("^(?!.* )");
+  let result = validReq.test(username);
+  return result;
+};
+const validEmail = (email) => {
+  let emailreq = new RegExp("^(?=.*[@])");
+  let result = emailreq.test(email);
+  return result;
+};
+
 const NodeCache = require("node-cache");
 const myCache = new NodeCache();
 
@@ -48,6 +59,18 @@ module.exports = {
           conn.release();
           throw { message: "Email telah Terdaftar" };
         }
+      }
+      if (!validEmail(email)) {
+        conn.release();
+        throw {
+          message: "Email tidak valid",
+        };
+      }
+      if (!validUsername(username)) {
+        conn.release();
+        throw {
+          message: "Username tidak boleh mengandung spasi",
+        };
       }
       // proteksi strength password
       if (!strengthPass(password)) {

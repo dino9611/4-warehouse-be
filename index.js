@@ -53,7 +53,7 @@ const {
   adminRoute,
   warehouseRoute,
   profileRoute,
-  userRoutes,
+
   salesRoute,
   transactionRoute,
   locationRoute,
@@ -62,7 +62,7 @@ const {
 } = require("./src/routes");
 
 // Routing
-app.use("/auth", AuthRoutes);
+app.use("/auth", authRoutes);
 app.use("/profile", profileRoute);
 app.use("/product", productRoute);
 app.use("/admin", adminRoute);
