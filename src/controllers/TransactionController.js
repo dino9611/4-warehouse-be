@@ -1013,7 +1013,6 @@ module.exports = {
         0,
         parseInt(id),
       ]);
-<<<<<<< HEAD
 
       for (let i = 0; i < transactionDetailResult.length; i++) {
         if (transactionDetailResult[i].stock_status === "Sufficient") {
@@ -1044,17 +1043,11 @@ module.exports = {
         }
       }
       console.log(transactionDetailResult);
-=======
->>>>>>> origin/develop
 
       conn.release();
       return res.status(200).send(transactionDetailResult);
     } catch (error) {
       conn.release();
-<<<<<<< HEAD
-      console.log(error.message);
-=======
->>>>>>> origin/develop
       console.log(error);
       return res.status(500).send({ message: error.message || "Server error" });
     }
@@ -1101,20 +1094,11 @@ module.exports = {
       `;
 
       let statusIdParams;
-<<<<<<< HEAD
-      actionIdentifier === 1 ? (statusIdParams = 3) : (statusIdParams = 6);
-=======
       actionIdentifier ? (statusIdParams = 3) : (statusIdParams = 6);
->>>>>>> origin/develop
 
       await conn.query(sql, [statusIdParams, parseInt(transactionId)]);
 
       let responseMessage = "";
-<<<<<<< HEAD
-      actionIdentifier === 1
-        ? (responseMessage = "Transaction accepted")
-        : (responseMessage = "Transaction rejected");
-=======
       actionIdentifier
         ? (responseMessage = "Transaction accepted")
         : (responseMessage = "Transaction rejected");
@@ -1131,7 +1115,6 @@ module.exports = {
         conn.release();
         return res.status(200).send({ message: responseMessage });
       }
->>>>>>> origin/develop
 
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
@@ -1179,11 +1162,7 @@ module.exports = {
         ]);
 
         const isAllSufficient = (currentValue) =>
-<<<<<<< HEAD
           currentValue.qty <= currentValue.total_stock;
-=======
-          currentValue.qty < currentValue.total_stock;
->>>>>>> origin/develop
         const stockCheck = validationResult.every(isAllSufficient);
         // ! Digunakan utk validasi ulang stok stlh klik button "Send", apakah stok cukup/tidak, dikhawatirkan terjadi perubahan stok real-time saat klik button
 
@@ -1212,17 +1191,9 @@ module.exports = {
           // * Bila validasi cek stok = false (stok pesanan tidak mencukupi)
           await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
           conn.release();
-<<<<<<< HEAD
           return res.status(200).send({
             message: `Stock change occurred during confirmation, please re-check stock/request stock`,
           });
-=======
-          return res
-            .status(200)
-            .send({
-              message: `Stock change occurred during confirmation, please re-check stock/request stock`,
-            });
->>>>>>> origin/develop
         }
       } else {
         // ? Bila warehouse admin pada frontend klik button "Reject"
