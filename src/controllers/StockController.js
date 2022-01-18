@@ -67,6 +67,20 @@ module.exports = {
         ]);
 
         if (checkData.length) {
+          sql = `select sum(stock) as total_stock, w.name from stock s
+          join warehouse w
+          on w.id = s.warehouse_id      
+          where warehouse_id = ? and product_id = ? and ready_to_sent = 0`;
+          const [checkStock] = await connDb.query(sql, [
+            data.origin[i].warehouse_id,
+            data.productId,
+          ]);
+
+          if (checkStock[0].total_stock < checkData[0].qty + dataRequest.qty)
+            throw {
+              message: `Stock pada ${checkStock[0].name} kurang, anda pernah request ke gudang ini sebelumnya`,
+            };
+
           sql = `update log_request set qty = ? where id = ?`;
           await connDb.query(sql, [
             checkData[0].qty + dataRequest.qty,
