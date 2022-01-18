@@ -3,22 +3,25 @@ const router = express.Router();
 const { uploader, verifyPass } = require("../helpers/");
 const { connection } = require("../connection");
 const { productController } = require("./../controllers");
-const { getProdCategory, addProduct, listProduct, getDetailedProduct } =
-  productController;
 const {
   getProdCategory,
   addProduct,
   editProdNoImg,
   editProdImg,
   deleteProdImg,
+  editProductStock,
   listProduct,
   deleteProduct,
+  getDetailedProduct,
+  getHotProducts,
+  getProductBycategory,
 } = productController;
 
 let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product image
 
 const checkCategoryFolder = async (req, res, next) => {
   // Utk menentukan route folder uploaded product image by category
+  console.log("Jalan /product/determine-category");
   const conn = await connection.promise().getConnection();
   const { prod_category } = req.body;
 
@@ -85,9 +88,12 @@ router.post("/determine-category", checkCategoryFolder);
 router.post("/add", uploadFile, addProduct(categoryFolder));
 router.patch("/edit/:id", editProdNoImg);
 router.patch("/edit/image/:id", editImgCatFolder, uploadEditImg, editProdImg);
+router.post("/edit/stock", editProductStock);
 router.delete("/delete/image/:id", deleteProdImg);
 router.get("/", listProduct);
 router.get("/detailed-product/:productId", getDetailedProduct);
 router.delete("/delete/:prodId", verifyPass, deleteProduct);
+router.get("/get/hot-product", getHotProducts);
+router.get("/get/product-category/:categoryId", getProductBycategory);
 
 module.exports = router;
