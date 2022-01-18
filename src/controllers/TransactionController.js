@@ -26,7 +26,7 @@ module.exports = {
         cartId = cartUser[0].id;
       }
 
-      sql = `select id, qty from cart_detail where cart_id = ? and product_id = ?`;
+      sql = `select id, qty from cart_detail where cart_id = ? and product_id = ? and is_deleted = 0`;
       let [cartDetail] = await connDb.query(sql, [cartId, product_id]);
 
       sql = `select p.id, total_stock from product p
@@ -80,6 +80,10 @@ module.exports = {
       let sql = `select id from cart where user_id = ? and is_checkout = 0`;
       let [dataCart] = await connDb.query(sql, req.params.userId);
 
+      if (!dataCart.length) {
+        return res.status(200).send(errorStock);
+      }
+
       sql = `select product_id, qty from cart_detail where cart_id = ? and is_deleted = 0`;
       let [dataCartDetail] = await connDb.query(sql, dataCart[0].id);
 
@@ -89,16 +93,15 @@ module.exports = {
 
         if (dataCartDetail[i].qty > parseInt(dataStock[0]?.total_stock)) {
           errorStock.push(dataCartDetail[i].product_id);
-          console.log("tes");
         }
       }
-      console.log(errorStock);
+
       connDb.release();
 
       return res.status(200).send(errorStock);
     } catch (error) {
       connDb.release();
-      console.log(error);
+
       return res.status(500).send({ message: error.message });
     }
   },
@@ -119,21 +122,44 @@ module.exports = {
       group by product_id) s
       on s.product_id = cd.product_id
       where cart_id = ? and is_deleted = 0`;
-      let [dataCartDetail] = await connDb.query(sql, [dataCart[0].id]);
+      let [dataCartDetail] = await connDb.query(sql, [dataCart[0]?.id]);
 
       connDb.release();
 
       return res.status(200).send(dataCartDetail);
     } catch (error) {
       connDb.release();
+
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getTotalItemInCart: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      let sql = `select id from cart where user_id = ? and is_checkout = 0`;
+      let [dataCart] = await connDb.query(sql, [req.params.userId]);
+
+      if (!dataCart.length) {
+        return;
+      }
+      sql = `select sum(qty) as total_item from cart_detail
+      where cart_id = ? and is_deleted = 0`;
+      let [totalItem] = await connDb.query(sql, dataCart[0].id);
+      console.log(totalItem);
+      connDb.release();
+
+      return res.status(200).send(totalItem[0].total_item);
+    } catch (error) {
+      connDb.release();
+
       return res.status(500).send({ message: error.message });
     }
   },
 
   deleteProductInCart: async (req, res) => {
     const connDb = connection.promise();
-
-    console.log(req.params.cartDetailId);
 
     try {
       let sql = `update cart_detail set is_deleted = 1 where id = ?`;
@@ -164,9 +190,10 @@ module.exports = {
       user_id,
       cart_id,
       shipping_fee,
-      destination,
+      address_id,
       bank_id,
       warehouse_id,
+      courier,
     } = req.body;
 
     try {
@@ -175,7 +202,7 @@ module.exports = {
       if (
         !user_id &&
         !shipping_fee &&
-        !destination &&
+        !address_id &&
         !bank_id &&
         !warehouse_id
       ) {
@@ -184,17 +211,18 @@ module.exports = {
 
       // Update is_checkout pada table cart menjadi 1
 
-      sql = `update cart set ? where user_id = ? and is_checkout = 0`;
-      await connDb.query(sql, [{ is_checkout: 1 }, user_id]);
+      sql = `update cart set is_checkout = 1 where user_id = ? and is_checkout = 0`;
+      await connDb.query(sql, [user_id]);
 
       // Insert data baru ke tabel order
 
       let dataOrder = {
         user_id,
         shipping_fee,
-        destination,
+        address_id,
         bank_id,
         warehouse_id,
+        courier,
       };
 
       sql = `insert into orders set ?`;
@@ -233,13 +261,15 @@ module.exports = {
 
       await connDb.commit();
 
-      return res
-        .status(200)
-        .send({ data: cart_id, message: "Berhasil checkout" });
+      return res.status(200).send({
+        data: cart_id,
+        ordersId: order.insertId,
+        message: "Berhasil checkout",
+      });
     } catch (error) {
       connDb.release();
       await connDb.rollback();
-      console.log(error);
+
       return res.status(500).send({ message: error.message });
     }
   },
@@ -257,6 +287,54 @@ module.exports = {
     }
   },
 
+  uploadPaymentProof: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      const path = "/assets/images/uploaded/payment-proof";
+
+      imagePath = req.files.image
+        ? `${path}/${req.files.image[0].filename}`
+        : null;
+
+      const dataPaymentProof = {
+        status_id: 2,
+        payment_proof: imagePath,
+      };
+
+      let sql = `update orders set ? where id = ?`;
+      await connDb.query(sql, [dataPaymentProof, req.params.ordersId]);
+
+      sql = `select payment_proof from orders where id = ?`;
+      let [paymentProof] = await connDb.query(sql, req.params.ordersId);
+
+      return res.status(200).send(paymentProof[0]);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getDataOrders: async (req, res) => {
+    const connDb = connection.promise();
+
+    try {
+      let sql = `select o.create_on, b.name, b.account_number, a.phone_number, (od.qty * p.price) as total_price, o.shipping_fee from order_detail od
+      join orders o
+      on o.id = od.orders_id
+      join product p 
+      on p.id = od.product_id
+      join bank b
+      on b.id = o.bank_id
+      join address a
+      on a.id = o.address_id
+      where orders_id = ?`;
+      let [dataOrders] = await connDb.query(sql, req.params.ordersId);
+
+      return res.status(200).send(dataOrders);
+    } catch (error) {
+      return res.status(500).send({ message: error.message });
+    }
+  },
   getAllTransactions: async (req, res) => {
     console.log("Jalan /transaction/all-transactions");
     const conn = await connection.promise().getConnection();
@@ -296,34 +374,47 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `SELECT COUNT(id) AS orders_total FROM orders;`;
       } else {
         sql = `SELECT COUNT(id) AS orders_total FROM orders WHERE warehouse_id = ${whid};`;
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getWaitPayTransactions: async (req, res) => {
     console.log("Jalan /transaction/wait-pay-transactions");
@@ -365,17 +456,30 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [1, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -393,18 +497,18 @@ module.exports = {
           WHERE o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [1, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getWaitConfirmTrans: async (req, res) => {
     console.log("Jalan /transaction/wait-confirm-transactions");
@@ -446,17 +550,30 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [2, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "false"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "false",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -474,18 +591,18 @@ module.exports = {
           WHERE o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [2, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getOnProcessTrans: async (req, res) => {
     console.log("Jalan /transaction/onprocess-transactions");
@@ -527,17 +644,30 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [3, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -555,18 +685,18 @@ module.exports = {
           WHERE o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [3, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getDelivTransactions: async (req, res) => {
     console.log("Jalan /transaction/delivery-transactions");
@@ -608,17 +738,30 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [4, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -636,18 +779,18 @@ module.exports = {
           WHERE o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [4, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getReceivedTransactions: async (req, res) => {
     console.log("Jalan /transaction/received-transactions");
@@ -689,17 +832,30 @@ module.exports = {
           LIMIT ? OFFSET ?;
         `;
         queryParameter = [5, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -717,18 +873,18 @@ module.exports = {
           WHERE o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [5, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getFailTransactions: async (req, res) => {
     console.log("Jalan /transaction/fail-transactions");
@@ -739,7 +895,7 @@ module.exports = {
     try {
       let sql;
       let queryParameter = [];
-      
+
       if (parseInt(roleid) === 1) {
         sql = `
           SELECT o.id, o.status_id, so.status, SUM(od.price) AS transaction_amount, IFNULL(o.shipping_fee, 0) AS shipping_fee, o.warehouse_id, w.name AS warehouse_name, o.payment_proof, o.create_on AS transaction_date FROM status_order AS so
@@ -769,18 +925,37 @@ module.exports = {
           ORDER BY transaction_date DESC
           LIMIT ? OFFSET ?;
         `;
-        queryParameter = [6, 7, parseInt(whid), parseInt(limit), parseInt(offset)];
-      };
+        queryParameter = [
+          6,
+          7,
+          parseInt(whid),
+          parseInt(limit),
+          parseInt(offset),
+        ];
+      }
 
       const [transactionsResult] = await conn.query(sql, queryParameter);
 
-      const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: "true"};
+      const dateOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: "true",
+      };
 
       for (let i = 0; i < transactionsResult.length; i++) {
-          transactionsResult[i].transaction_amount = parseInt(transactionsResult[i].transaction_amount);
-          transactionsResult[i].shipping_fee = parseInt(transactionsResult[i].shipping_fee);
-          transactionsResult[i].transaction_date = transactionsResult[i].transaction_date.toLocaleString('id-ID', dateOptions);
-      };
+        transactionsResult[i].transaction_amount = parseInt(
+          transactionsResult[i].transaction_amount
+        );
+        transactionsResult[i].shipping_fee = parseInt(
+          transactionsResult[i].shipping_fee
+        );
+        transactionsResult[i].transaction_date = transactionsResult[
+          i
+        ].transaction_date.toLocaleString("id-ID", dateOptions);
+      }
 
       if (parseInt(roleid) === 1) {
         sql = `
@@ -798,18 +973,18 @@ module.exports = {
           WHERE o.status_id = ? OR o.status_id = ? AND o.warehouse_id = ?;
         `;
         queryParameter = [6, 7, parseInt(whid)];
-      };
+      }
 
       let [ordersTotal] = await conn.query(sql, queryParameter);
       res.set("x-total-count", ordersTotal[0].orders_total);
 
       conn.release();
       return res.status(200).send(transactionsResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getTransactionDetail: async (req, res) => {
     console.log("Jalan /transaction/detail");
@@ -832,16 +1007,20 @@ module.exports = {
         WHERE o.id = ?
         GROUP BY od.product_id
         ORDER BY od.product_id;
-      `
-      const [transactionDetailResult] = await conn.query(sql, [parseInt(whid), 0, parseInt(id)]);
+      `;
+      const [transactionDetailResult] = await conn.query(sql, [
+        parseInt(whid),
+        0,
+        parseInt(id),
+      ]);
 
       conn.release();
       return res.status(200).send(transactionDetailResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getShippingInfo: async (req, res) => {
     console.log("Jalan /transaction/detail-shipping");
@@ -858,22 +1037,22 @@ module.exports = {
         JOIN address a
         ON u.id = a.user_id
         WHERE o.id = ? AND a.is_main_address = ?;
-      `
+      `;
       const [shippingInfoResult] = await conn.query(sql, [parseInt(id), 1]);
 
       conn.release();
       return res.status(200).send(shippingInfoResult[0]);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   confirmRejectTransactionPay: async (req, res) => {
     console.log("Jalan /transaction/confirm-payment");
     const conn = await connection.promise().getConnection();
     const { transactionId } = req.params; // Dari frontend
-    const { actionIdentifier } = req.body; 
+    const { actionIdentifier } = req.body;
     //! Dari frontend actionIdentifier "Accept" = 1 - true, "Reject" = 0 - false
 
     try {
@@ -885,12 +1064,14 @@ module.exports = {
       `;
 
       let statusIdParams;
-      actionIdentifier ? statusIdParams = 3 : statusIdParams = 6;
+      actionIdentifier ? (statusIdParams = 3) : (statusIdParams = 6);
 
       await conn.query(sql, [statusIdParams, parseInt(transactionId)]);
 
       let responseMessage = "";
-      actionIdentifier ? responseMessage = "Transaction accepted" : responseMessage = "Transaction rejected";
+      actionIdentifier
+        ? (responseMessage = "Transaction accepted")
+        : (responseMessage = "Transaction rejected");
 
       if (!actionIdentifier) {
         sql = `
@@ -908,12 +1089,12 @@ module.exports = {
       await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
       conn.release();
       return res.status(200).send({ message: responseMessage });
-      } catch (error) {
-          await conn.rollback(); // Rollback data klo terjadi error/gagal
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   confirmRejectTransactionDelivery: async (req, res) => {
     console.log("Jalan /transaction/confirm-delivery");
@@ -925,7 +1106,8 @@ module.exports = {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
       let sql;
 
-      if (actionIdentifier) { // ? Bila warehouse admin pada frontend klik button "Send"
+      if (actionIdentifier) {
+        // ? Bila warehouse admin pada frontend klik button "Send"
         sql = `
           SELECT o.id AS order_id, od.product_id, od.qty, IFNULL(st.total_stock, 0) AS total_stock, IF(st.total_stock >= od.qty, "Sufficient", "Insufficient") AS stock_status FROM status_order AS so
           JOIN orders o
@@ -942,14 +1124,20 @@ module.exports = {
           GROUP BY od.product_id
           ORDER BY od.product_id;
         `;
-        
-        const [validationResult] = await conn.query(sql, [parseInt(warehouseId), 0, parseInt(orderId)]);
 
-        const isAllSufficient = (currentValue) => currentValue.qty <  currentValue.total_stock;
+        const [validationResult] = await conn.query(sql, [
+          parseInt(warehouseId),
+          0,
+          parseInt(orderId),
+        ]);
+
+        const isAllSufficient = (currentValue) =>
+          currentValue.qty < currentValue.total_stock;
         const stockCheck = validationResult.every(isAllSufficient);
         // ! Digunakan utk validasi ulang stok stlh klik button "Send", apakah stok cukup/tidak, dikhawatirkan terjadi perubahan stok real-time saat klik button
 
-        if (stockCheck) { // * Bila validasi cek stok = true (stok pesanan masih mencukupi)
+        if (stockCheck) {
+          // * Bila validasi cek stok = true (stok pesanan masih mencukupi)
           sql = `
             UPDATE orders SET status_id = ?
             WHERE id = ?;
@@ -966,13 +1154,21 @@ module.exports = {
 
           await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
           conn.release();
-          return res.status(200).send({ message: `Yeay! Order #${orderId} otw to customer` });
-        } else { // * Bila validasi cek stok = false (stok pesanan tidak mencukupi)
+          return res
+            .status(200)
+            .send({ message: `Yeay! Order #${orderId} otw to customer` });
+        } else {
+          // * Bila validasi cek stok = false (stok pesanan tidak mencukupi)
           await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
           conn.release();
-          return res.status(200).send({ message: `Stock change occurred during confirmation, please re-check stock/request stock` });
-        };
-      } else { // ? Bila warehouse admin pada frontend klik button "Reject"
+          return res
+            .status(200)
+            .send({
+              message: `Stock change occurred during confirmation, please re-check stock/request stock`,
+            });
+        }
+      } else {
+        // ? Bila warehouse admin pada frontend klik button "Reject"
         sql = `
           UPDATE orders SET status_id = ?
           WHERE id = ?;
@@ -990,30 +1186,30 @@ module.exports = {
         await conn.commit(); // Commit permanent data diupload ke MySql klo berhasil
         conn.release();
         return res.status(200).send({ message: "Transaction rejected" });
-      };
-      } catch (error) {
-          await conn.rollback(); // Rollback data klo terjadi error/gagal
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
       }
+    } catch (error) {
+      await conn.rollback(); // Rollback data klo terjadi error/gagal
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getTransactionStatuses: async (req, res) => {
     console.log("Jalan /transaction/statuses");
     const conn = await connection.promise().getConnection();
 
     try {
-      let sql = `SELECT id, status FROM status_order;`
+      let sql = `SELECT id, status FROM status_order;`;
 
       const [statusesResult] = await conn.query(sql);
 
       conn.release();
       return res.status(200).send(statusesResult);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
   getPaymentProof: async (req, res) => {
     console.log("Jalan /transaction/payment-proof");
@@ -1021,16 +1217,16 @@ module.exports = {
     const { orderId } = req.params; // Dari frontend
 
     try {
-      let sql = `SELECT payment_proof FROM orders WHERE id = ?;`
+      let sql = `SELECT payment_proof FROM orders WHERE id = ?;`;
 
       const [payProofResult] = await conn.query(sql, orderId);
 
       conn.release();
       return res.status(200).send(payProofResult[0].payment_proof);
-      } catch (error) {
-          conn.release();
-          console.log(error);
-          return res.status(500).send({ message: error.message || "Server error" });
-      }
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    }
   },
 };

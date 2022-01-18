@@ -70,6 +70,8 @@ PATCH http://localhost:2004/product/edit/10 HTTP/1.1
 Content-Type: application/json
 prod_category: 2
 
+###
+GET http://localhost:2004/location/get/province HTTP/1.1
 ### 
 PATCH  http://localhost:2004/user/default-address/22 HTTP/1.1
 Content-Type: application/json

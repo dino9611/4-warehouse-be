@@ -13,6 +13,9 @@ const {
   listProduct,
   getDetailedProduct,
   deleteProduct,
+  getDetailedProduct,
+  getHotProducts,
+  getProductBycategory,
 } = productController;
 
 let categoryFolder = [""]; // Variabel utk simpan route folder uploaded product image
@@ -91,5 +94,7 @@ router.delete("/delete/image/:id", deleteProdImg);
 router.get("/", listProduct);
 router.get("/detailed-product/:productId", getDetailedProduct);
 router.delete("/delete/:prodId", verifyPass, deleteProduct);
+router.get("/get/hot-product", getHotProducts);
+router.get("/get/product-category/:categoryId", getProductBycategory);
 
 module.exports = router;
