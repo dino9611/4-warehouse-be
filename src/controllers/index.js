@@ -9,10 +9,7 @@ const salesController = require("./SalesController");
 const transactionController = require("./TransactionController");
 const locationController = require("./LocationController");
 const HistoryController = require("./HistoryController");
-<<<<<<< HEAD
-=======
 const StockController = require("./StockController");
->>>>>>> develop
 
 module.exports = {
   profileController,
