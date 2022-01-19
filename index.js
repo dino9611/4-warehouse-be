@@ -54,7 +54,7 @@ const {
   adminRoute,
   warehouseRoute,
   profileRoute,
-
+  userRoutes,
   salesRoute,
   transactionRoute,
   locationRoute,
