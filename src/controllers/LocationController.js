@@ -1,8 +1,9 @@
 const express = require("express");
 const app = express();
 const { connection } = require("../connection");
+require("dotenv").config();
 const RajaOngkir = require("rajaongkir-nodejs").Starter(
-  "8b87be47bf10fc3f713790a8957c0ab6"
+  `${process.env.RAJA_LOCATION_GANGSAR}`
 );
 const geolib = require("geolib");
 

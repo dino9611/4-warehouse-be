@@ -1,5 +1,6 @@
 const { connection } = require("../connection");
-const rajaOngkirForAdmin = require("rajaongkir-nodejs").Starter("de17bd7bb0affc59cadc64b73ebffe2f");
+require("dotenv").config();
+const rajaOngkirForAdmin = require("rajaongkir-nodejs").Starter(`${process.env.RAJA_ADMIN_MAUL}`);
 
 module.exports = {
     getWarehouse: async (req, res) => {
