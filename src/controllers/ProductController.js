@@ -89,7 +89,8 @@ module.exports = {
     console.log("Jalan /product/edit/:id");
     const conn = await connection.promise().getConnection();
     const { id } = req.params;
-    const { name, category_id, weight, price, product_cost, description } = req.body;
+    const { name, category_id, weight, price, product_cost, description } =
+      req.body;
 
     try {
       await conn.beginTransaction(); // Aktivasi table tidak permanen agar bisa rollback/commit permanent
@@ -232,7 +233,7 @@ module.exports = {
   },
   editProductStock: async (req, res) => {
     console.log("Jalan /product/edit/stock");
-    const {warehouse_id, product_id, new_stock} = req.body
+    const { warehouse_id, product_id, new_stock } = req.body;
     const conn = await connection.promise().getConnection();
 
     try {
@@ -243,7 +244,7 @@ module.exports = {
         warehouse_id: warehouse_id,
         product_id: product_id,
         stock: new_stock,
-        ready_to_sent: 0
+        ready_to_sent: 0,
       };
 
       await conn.query(sql, addStockData);
@@ -371,23 +372,14 @@ module.exports = {
     const connDb = connection.promise();
 
     try {
-      // let sql = `select p.id, name, price, weight, category_id, c.category, total_stock, description, images from product p
-      // join category c
-      // on c.id = p.category_id
-      // join (select product_id, sum(stock) as total_stock from stock
-      // group by product_id) s
-      // on s.product_id = p.id
-      // where category_id = ? and is_delete = 0 and total_stock != 0`;
-
-      // INI BUAT SEMENTARA OKE, YANG BENER YANG ATAS
       let sql = `select p.id, name, price, weight, category_id, c.category, total_stock, description, images from product p
       join category c
       on c.id = p.category_id
-      left join (select product_id, sum(stock) as total_stock from stock
+      join (select product_id, sum(stock) as total_stock from stock
       group by product_id) s
       on s.product_id = p.id
-      where category_id = ? and is_delete = 0
-      limit ?`;
+      where category_id = ? and is_delete = 0 and total_stock != 0`;
+
       const [dataProductByCategory] = await connDb.query(sql, [
         req.params.categoryId,
         parseInt(req.query.limit),

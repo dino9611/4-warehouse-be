@@ -17,10 +17,10 @@ module.exports = {
 
       sql = `select warehouse_id, w.name, w.address, IFNULL(total_stock, 0) as stocks, latitude, longitude, 0 as request_qty from warehouse w
         join (select sum(stock) as total_stock, warehouse_id from stock
-        where product_id = ?
+        where product_id = ? and ready_to_sent = 0
         group by warehouse_id) s
         on s.warehouse_id = w.id
-        where not id = ?`;
+        where not id = ? `;
       let [listWarehouse] = await connDb.query(sql, [
         req.query.productId,
         warehouseId[0].warehouse_id,
@@ -39,6 +39,7 @@ module.exports = {
       });
     } catch (error) {
       connDb.release();
+      console.log(error);
       return res.status(500).send({ message: error.message });
     }
   },
@@ -66,6 +67,20 @@ module.exports = {
         ]);
 
         if (checkData.length) {
+          sql = `select sum(stock) as total_stock, w.name from stock s
+          join warehouse w
+          on w.id = s.warehouse_id      
+          where warehouse_id = ? and product_id = ? and ready_to_sent = 0`;
+          const [checkStock] = await connDb.query(sql, [
+            data.origin[i].warehouse_id,
+            data.productId,
+          ]);
+
+          if (checkStock[0].total_stock < checkData[0].qty + dataRequest.qty)
+            throw {
+              message: `Stock pada ${checkStock[0].name} kurang, anda pernah request ke gudang ini sebelumnya`,
+            };
+
           sql = `update log_request set qty = ? where id = ?`;
           await connDb.query(sql, [
             checkData[0].qty + dataRequest.qty,
