@@ -10,8 +10,25 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.24.0",
+    "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "mysql": "github:mysqljs/mysql"
+    "express-bearer-token": "^2.4.0",
+    "geolib": "^3.3.3",
+    "handlebars": "^4.7.7",
+    "html-pdf": "^3.0.1",
+    "install": "^0.13.0",
+    "jsonwebtoken": "^8.5.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.3",
+    "mysql": "github:mysqljs/mysql",
+    "mysql2": "^2.3.0",
+    "node-cache": "^5.1.2",
+    "nodemailer": "^6.7.0",
+    "nodemon": "^2.0.15",
+    "npm": "^8.0.0",
+    "rajaongkir-nodejs": "^0.2.0",
+    "winston": "^3.3.3"
   }
 }

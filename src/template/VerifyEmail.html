@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Verifikasi</title>
+  </head>
+  <body>
+    <center>
+      <div
+        id="main-container"
+        style="
+          border: 1px solid gray;
+          height: 500px;
+          width: 500px;
+          padding: 0 16px;
+          border-radius: 5px;
+        "
+      >
+        <img
+          src="http://localhost:2004/assets/images/logo/Logo.png"
+          width="200"
+          height="100"
+          style="margin-top: 25px"
+        />
+        <h1>Email Confirmation</h1>
+        <h3>Hai {{nama}},</h3>
+        <h4>
+          Tolong klik "Verifikasi Sekarang" untuk memverifikasi email anda
+        </h4>
+        <h4 style="margin-top: 25px">
+          <a
+            href="http://localhost:3000/verify-email?token={{token}}&xtoken={{sendToken}}"
+            style="
+              background-color: #b24629;
+              border-radius: 5px;
+              color: white;
+              padding: 10px 12px;
+              text-decoration: none;
+            "
+          >
+            Verifikasi Sekarang
+          </a>
+        </h4>
+      </div>
+    </center>
+  </body>
+</html>
