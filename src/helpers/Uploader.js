@@ -38,7 +38,7 @@ const uploader = (destination, filenamePrefix) => {
   });
 
   const imageExtFilter = (req, file, cb) => {
-    const extension = /\.(jpg|jpeg|png)$/;
+    const extension = /\.(jpg|jpeg|png|JPG|JPEG|PNG)$/;
     if (!file.originalname.match(extension)) {
       return cb(new Error("Please upload the only file type allowed"));
     } else {
