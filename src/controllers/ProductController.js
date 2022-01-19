@@ -378,7 +378,8 @@ module.exports = {
       join (select product_id, sum(stock) as total_stock from stock
       group by product_id) s
       on s.product_id = p.id
-      where category_id = ? and is_delete = 0 and total_stock != 0`;
+      where category_id = ? and is_delete = 0 and total_stock != 0
+      limit ?`;
 
       const [dataProductByCategory] = await connDb.query(sql, [
         req.params.categoryId,
