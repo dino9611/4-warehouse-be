@@ -247,10 +247,18 @@ module.exports = {
         sql = `insert into stock set ?`;
         await connDb.query(sql, dataStock);
 
+        sql = `select price from product 
+        where id = ?`;
+        const [priceProduct] = await connDb.query(
+          sql,
+          dataCartDetail[i].product_id
+        );
+
         const dataOrderDetail = {
           orders_id: order.insertId,
           product_id: dataCartDetail[i].product_id,
           qty: dataCartDetail[i].qty,
+          price: priceProduct[0].price,
         };
 
         sql = `insert into order_detail set ?`;
