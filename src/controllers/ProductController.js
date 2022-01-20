@@ -346,7 +346,7 @@ module.exports = {
     const connDb = connection.promise();
 
     try {
-      let sql = `select p.id, p.name, p.price, p.weight, c.category, p.product_cost, p.description, p.images,  sum(qty) as total_qty, total_stock from product p
+      let sql = `select p.id, p.name, p.price, p.weight, c.category, p.category_id, p.product_cost, p.description, p.images,  sum(qty) as total_qty, total_stock from product p
       join order_detail od
       on od.product_id = p.id
       join orders o
@@ -378,7 +378,8 @@ module.exports = {
       join (select product_id, sum(stock) as total_stock from stock
       group by product_id) s
       on s.product_id = p.id
-      where category_id = ? and is_delete = 0 and total_stock != 0`;
+      where category_id = ? and is_delete = 0 and total_stock != 0
+      limit ?`;
 
       const [dataProductByCategory] = await connDb.query(sql, [
         req.params.categoryId,
