@@ -108,7 +108,6 @@ module.exports = {
         .status(200)
         .send({ ...res1.rajaongkir.results[0], ...findNearest });
     } catch (error) {
-      console.log(error);
       if (error.rajaongkir.status.code === 400)
         return res.status(400).send({ message: "Kuota habis" });
       return res.status(500).send({ message: error.message });
@@ -120,11 +119,13 @@ module.exports = {
       let provinces = await RajaOngkir.getProvinces();
 
       let provincesSelect = provinces.rajaongkir.results.map((el) => {
-        return { ...el, label: el.province };
+        return { ...el, label: el.province, value: el.province };
       });
 
       return res.status(200).send(provincesSelect);
     } catch (error) {
+      if (error.rajaongkir.status.code === 400)
+        return res.status(400).send({ message: "Kuota habis" });
       return res.status(500).send({ message: error.message });
     }
   },
@@ -137,7 +138,15 @@ module.exports = {
         el.province.toLowerCase().includes(req.params.province.toLowerCase())
       );
 
-      return res.status(200).send(filterCities);
+      let cityOptions = filterCities.map((el, index) => {
+        return {
+          value: el.city_name,
+          label: `${el.type} ${el.city_name}`,
+          ...el,
+        };
+      });
+
+      return res.status(200).send(cityOptions);
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message });
@@ -151,11 +160,13 @@ module.exports = {
       recipient,
       phone_number,
       address,
-      province,
-      city,
       latitude,
       longitude,
       is_main_address,
+      province,
+      city_id,
+      province_id,
+      label,
     } = req.body;
 
     try {
@@ -209,24 +220,12 @@ module.exports = {
       sql = `insert into address set ?`;
       let [newAddress] = await connDb.query(sql, dataAddress);
 
-      let provinces = await RajaOngkir.getProvinces();
-
-      let filterProvince = provinces.rajaongkir.results.filter((el) =>
-        el.province.toLowerCase().includes(province.toLowerCase())
-      );
-
-      let cities = await RajaOngkir.getCities();
-
-      let filterCity = cities.rajaongkir.results.filter((el) =>
-        el.city_name.toLowerCase().includes(city.toLowerCase())
-      );
-
       const dataRegion = {
         address_id: newAddress.insertId,
         province,
-        province_id: filterProvince[0].province_id,
-        city,
-        city_id: filterCity[0].city_id,
+        province_id,
+        city: label,
+        city_id,
       };
 
       sql = `insert into region set ?`;
