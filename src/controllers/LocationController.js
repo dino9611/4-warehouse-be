@@ -106,9 +106,11 @@ module.exports = {
 
       return res
         .status(200)
-        .send({ ...res1.rajaongkir.results, ...findNearest });
+        .send({ ...res1.rajaongkir.results[0], ...findNearest });
     } catch (error) {
       console.log(error);
+      if (error.rajaongkir.status.code === 400)
+        return res.status(400).send({ message: "Kuota habis" });
       return res.status(500).send({ message: error.message });
     }
   },
@@ -120,8 +122,6 @@ module.exports = {
       let provincesSelect = provinces.rajaongkir.results.map((el) => {
         return { ...el, label: el.province };
       });
-
-      console.log(provincesSelect);
 
       return res.status(200).send(provincesSelect);
     } catch (error) {
@@ -225,6 +225,45 @@ module.exports = {
       await connDb.rollback();
       connDb.release();
 
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getDistance: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      let sql = `select a.id, user_id, address, city_id, latitude, longitude from address a
+      join region r
+      on r.address_id = a.id
+      where a.id = ?`;
+      let [userAddress] = await connDb.query(sql, [req.params.addressId]);
+
+      sql = `select id, name, address, province, province_id, city, city_id, latitude, longitude from warehouse`;
+      let [warehouseAddress] = await connDb.query(sql);
+
+      let findNearest = geolib.findNearest(userAddress[0], warehouseAddress);
+
+      const getDistance = geolib.getDistance(userAddress[0], findNearest);
+
+      connDb.release();
+
+      const dataShipment = {
+        ...findNearest,
+        code: "Local Shipment",
+        costs: [
+          {
+            service: "SPS",
+            description: "Sabar Pasti Sampai",
+            cost: [{ value: 10 * getDistance, etd: "1-2" }],
+          },
+        ],
+      };
+      console.log("dis", getDistance);
+      return res.status(200).send(dataShipment);
+    } catch (error) {
+      connDb.release();
+      console.log(error);
       return res.status(500).send({ message: error.message });
     }
   },

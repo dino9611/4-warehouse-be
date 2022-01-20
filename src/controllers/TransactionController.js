@@ -147,7 +147,7 @@ module.exports = {
       sql = `select sum(qty) as total_item from cart_detail
       where cart_id = ? and is_deleted = 0`;
       let [totalItem] = await connDb.query(sql, dataCart[0].id);
-      console.log(totalItem);
+
       connDb.release();
 
       return res.status(200).send(totalItem[0].total_item);
