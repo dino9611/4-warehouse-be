@@ -59,7 +59,7 @@ module.exports = {
       on b.id = o.bank_id
       where o.id = ?`;
       let [dataOrderDetail] = await connDb.query(sql, req.params.ordersId);
-      console.log("orderdetail", dataOrderDetail);
+
       return res.status(200).send(dataOrderDetail);
     } catch (error) {
       console.log(error);

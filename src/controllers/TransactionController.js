@@ -316,8 +316,11 @@ module.exports = {
       sql = `select payment_proof from orders where id = ?`;
       let [paymentProof] = await connDb.query(sql, req.params.ordersId);
 
+      connDb.release();
+
       return res.status(200).send(paymentProof[0]);
     } catch (error) {
+      connDb.release();
       return res.status(500).send({ message: error.message });
     }
   },

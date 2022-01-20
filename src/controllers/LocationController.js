@@ -177,15 +177,33 @@ module.exports = {
           is_main_address: 1,
         };
       } else {
-        dataAddress = {
-          user_id,
-          recipient,
-          phone_number,
-          address,
-          latitude,
-          longitude,
-          is_main_address,
-        };
+        if (parseInt(is_main_address) === 1) {
+          let sql = `select id from address where user_id = ? and is_main_address = 1`;
+          let [dataMainAddress] = await connDb.query(sql, [user_id]);
+
+          sql = `update address set is_main_address = 0 where id = ?`;
+          await connDb.query(sql, [dataMainAddress[0].id]);
+
+          dataAddress = {
+            user_id,
+            recipient,
+            phone_number,
+            address,
+            latitude,
+            longitude,
+            is_main_address,
+          };
+        } else {
+          dataAddress = {
+            user_id,
+            recipient,
+            phone_number,
+            address,
+            latitude,
+            longitude,
+            is_main_address: 0,
+          };
+        }
       }
 
       sql = `insert into address set ?`;
@@ -255,15 +273,15 @@ module.exports = {
           {
             service: "SPS",
             description: "Sabar Pasti Sampai",
-            cost: [{ value: 10 * getDistance, etd: "1-2" }],
+            cost: [{ value: Math.round(0.1 * getDistance), etd: "1-2" }],
           },
         ],
       };
-      console.log("dis", getDistance);
+
       return res.status(200).send(dataShipment);
     } catch (error) {
       connDb.release();
-      console.log(error);
+
       return res.status(500).send({ message: error.message });
     }
   },
