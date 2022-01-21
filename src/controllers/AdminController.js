@@ -54,7 +54,8 @@ module.exports = {
               ON u.id = wa.user_id
               JOIN warehouse w
               ON wa.warehouse_id = w.id
-              WHERE u.role_id = ?;
+              WHERE u.role_id = ?
+              ORDER BY wa.warehouse_id;
           `;
 
         const [adminListResult] = await conn.query(sql, 2);
