@@ -9,6 +9,7 @@ const {
   getProvince,
   getcity,
   addNewAddress,
+  getDistance,
 } = locationController;
 
 router.get(`/shipping-fee/:addressId`, shippingFee);
@@ -18,5 +19,6 @@ router.patch("/edit/main-address", changeMainAddress);
 router.get("/get/province", getProvince);
 router.get("/get/city/:province", getcity);
 router.post("/add/new-address", addNewAddress);
+router.get("/get-distance/:addressId", getDistance);
 
 module.exports = router;

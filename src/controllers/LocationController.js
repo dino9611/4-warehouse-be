@@ -106,9 +106,10 @@ module.exports = {
 
       return res
         .status(200)
-        .send({ ...res1.rajaongkir.results, ...findNearest });
+        .send({ ...res1.rajaongkir.results[0], ...findNearest });
     } catch (error) {
-      console.log(error);
+      if (error.rajaongkir.status.code === 400)
+        return res.status(400).send({ message: "Kuota habis" });
       return res.status(500).send({ message: error.message });
     }
   },
@@ -118,13 +119,13 @@ module.exports = {
       let provinces = await RajaOngkir.getProvinces();
 
       let provincesSelect = provinces.rajaongkir.results.map((el) => {
-        return { ...el, label: el.province };
+        return { ...el, label: el.province, value: el.province };
       });
-
-      console.log(provincesSelect);
 
       return res.status(200).send(provincesSelect);
     } catch (error) {
+      if (error.rajaongkir.status.code === 400)
+        return res.status(400).send({ message: "Kuota habis" });
       return res.status(500).send({ message: error.message });
     }
   },
@@ -137,7 +138,15 @@ module.exports = {
         el.province.toLowerCase().includes(req.params.province.toLowerCase())
       );
 
-      return res.status(200).send(filterCities);
+      let cityOptions = filterCities.map((el, index) => {
+        return {
+          value: el.city_name,
+          label: `${el.type} ${el.city_name}`,
+          ...el,
+        };
+      });
+
+      return res.status(200).send(cityOptions);
     } catch (error) {
       console.log(error);
       return res.status(500).send({ message: error.message });
@@ -151,11 +160,13 @@ module.exports = {
       recipient,
       phone_number,
       address,
-      province,
-      city,
       latitude,
       longitude,
       is_main_address,
+      province,
+      city_id,
+      province_id,
+      label,
     } = req.body;
 
     try {
@@ -177,38 +188,44 @@ module.exports = {
           is_main_address: 1,
         };
       } else {
-        dataAddress = {
-          user_id,
-          recipient,
-          phone_number,
-          address,
-          latitude,
-          longitude,
-          is_main_address,
-        };
+        if (parseInt(is_main_address) === 1) {
+          let sql = `select id from address where user_id = ? and is_main_address = 1`;
+          let [dataMainAddress] = await connDb.query(sql, [user_id]);
+
+          sql = `update address set is_main_address = 0 where id = ?`;
+          await connDb.query(sql, [dataMainAddress[0].id]);
+
+          dataAddress = {
+            user_id,
+            recipient,
+            phone_number,
+            address,
+            latitude,
+            longitude,
+            is_main_address,
+          };
+        } else {
+          dataAddress = {
+            user_id,
+            recipient,
+            phone_number,
+            address,
+            latitude,
+            longitude,
+            is_main_address: 0,
+          };
+        }
       }
 
       sql = `insert into address set ?`;
       let [newAddress] = await connDb.query(sql, dataAddress);
 
-      let provinces = await RajaOngkir.getProvinces();
-
-      let filterProvince = provinces.rajaongkir.results.filter((el) =>
-        el.province.toLowerCase().includes(province.toLowerCase())
-      );
-
-      let cities = await RajaOngkir.getCities();
-
-      let filterCity = cities.rajaongkir.results.filter((el) =>
-        el.city_name.toLowerCase().includes(city.toLowerCase())
-      );
-
       const dataRegion = {
         address_id: newAddress.insertId,
         province,
-        province_id: filterProvince[0].province_id,
-        city,
-        city_id: filterCity[0].city_id,
+        province_id,
+        city: label,
+        city_id,
       };
 
       sql = `insert into region set ?`;
@@ -223,6 +240,45 @@ module.exports = {
         .send({ message: "Berhasil menyimpan alamat baru" });
     } catch (error) {
       await connDb.rollback();
+      connDb.release();
+
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  getDistance: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+
+    try {
+      let sql = `select a.id, user_id, address, city_id, latitude, longitude from address a
+      join region r
+      on r.address_id = a.id
+      where a.id = ?`;
+      let [userAddress] = await connDb.query(sql, [req.params.addressId]);
+
+      sql = `select id, name, address, province, province_id, city, city_id, latitude, longitude from warehouse`;
+      let [warehouseAddress] = await connDb.query(sql);
+
+      let findNearest = geolib.findNearest(userAddress[0], warehouseAddress);
+
+      const getDistance = geolib.getDistance(userAddress[0], findNearest);
+
+      connDb.release();
+
+      const dataShipment = {
+        ...findNearest,
+        code: "Local Shipment",
+        costs: [
+          {
+            service: "SPS",
+            description: "Sabar Pasti Sampai",
+            cost: [{ value: Math.round(0.1 * getDistance), etd: "1-2" }],
+          },
+        ],
+      };
+
+      return res.status(200).send(dataShipment);
+    } catch (error) {
       connDb.release();
 
       return res.status(500).send({ message: error.message });
