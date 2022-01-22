@@ -125,3 +125,7 @@ Content-Type: application/json
 ###
 GET http://localhost:2004/user/address/city/bengkulu HTTP/1.1
 Content-Type: application/json
+
+###
+GET http://localhost:2004/location/get/region/39 HTTP/1.1
+Content-Type: application/json
