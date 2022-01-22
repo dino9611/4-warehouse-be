@@ -147,7 +147,7 @@ module.exports = {
       sql = `select sum(qty) as total_item from cart_detail
       where cart_id = ? and is_deleted = 0`;
       let [totalItem] = await connDb.query(sql, dataCart[0].id);
-      console.log(totalItem);
+
       connDb.release();
 
       return res.status(200).send(totalItem[0].total_item);
@@ -316,8 +316,11 @@ module.exports = {
       sql = `select payment_proof from orders where id = ?`;
       let [paymentProof] = await connDb.query(sql, req.params.ordersId);
 
+      connDb.release();
+
       return res.status(200).send(paymentProof[0]);
     } catch (error) {
+      connDb.release();
       return res.status(500).send({ message: error.message });
     }
   },
