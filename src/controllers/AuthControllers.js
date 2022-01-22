@@ -140,6 +140,7 @@ module.exports = {
         html: htmlToEmail,
       });
       res.set("x-token-access", accessToken);
+      conn.release();
       return res.status(200).send({ token: accessToken, data: userData[0] });
     } catch (error) {
       conn.release();
@@ -176,6 +177,7 @@ module.exports = {
       //proteksi kalo belom verif gaboleh login
       const accessToken = createTokenAccess(dataToken);
       res.set("x-token-access", accessToken);
+      conn.release();
       return res.status(200).send({ ...userData[0] });
     } catch (error) {
       conn.release();
@@ -206,7 +208,7 @@ module.exports = {
       if (!userData.length) {
         throw { message: "username tidak ditemukan" };
       }
-
+      conn.release();
       return res.status(200).send({ ...userData[0] });
     } catch (error) {
       conn.release();
@@ -283,7 +285,7 @@ module.exports = {
         subject: "Email verifikasi",
         html: htmlToEmail,
       });
-
+      conn.release();
       return res
         .status(200)
         .send({ message: "Email verifikasi berhasil dikirim" });
