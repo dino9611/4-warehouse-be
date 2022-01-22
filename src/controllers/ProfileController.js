@@ -58,6 +58,8 @@ module.exports = {
       sql = `update user set ? where id = ? and role_id = 3`;
       let [dataUser] = await connDb.query(sql, [dataInput, req.params.userId]);
 
+      connDb.release();
+
       return res.status(200).send({ message: imagePath });
     } catch (error) {
       console.log(error);
@@ -133,9 +135,12 @@ module.exports = {
         html: htmlToEmail,
       });
 
+      connDb.release();
+
       return res.status(200).send(cekPass);
     } catch (error) {
       console.log(error);
+      connDb.release();
       return res.status(500).send({ message: error.message });
     }
   },
