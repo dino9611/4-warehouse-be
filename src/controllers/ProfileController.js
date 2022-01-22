@@ -70,7 +70,7 @@ module.exports = {
     const connDb = await connection.promise().getConnection();
 
     try {
-      if (!req.body.currentPass && !req.body.newPass) {
+      if (!req.body.currentPass || !req.body.newPass) {
         throw { message: "Password harus diisi!" };
       }
 
@@ -78,7 +78,7 @@ module.exports = {
       let [cekPass] = await connDb.query(sql, [hashPass(req.body.currentPass)]);
 
       if (!cekPass.length) {
-        return res.status(200).send(cekPass);
+        throw { message: "Password lama salah" };
       }
 
       sql = `update user set password = ? where id = ? and role_id = 3`;
@@ -89,7 +89,6 @@ module.exports = {
       return res.status(200).send(cekPass);
     } catch (error) {
       connDb.release();
-      console.log(error);
       return res.status(500).send({ message: error.message });
     }
   },
