@@ -563,6 +563,9 @@ module.exports = {
         role_id = Number(role_id);
         warehouse_id = Number(warehouse_id);
 
+        console.log("headers: ", req.headers);
+        console.log("filter_year: ", filter_year);
+
         try {
             let sql;
             let queryParameter;
