@@ -4,13 +4,18 @@ module.exports = {
     getMonthlyRevenue: async (req, res) => {
         console.log("Jalan /sales/monthly-revenue");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
+
+        // ? Pake metode 2 = semua req.query, dirubah parseInt sblm masuk try catch karena sempat error di server pwdk pake req.headers, skrg pake req.query utk coba fix
+        filterYear = parseInt(filterYear);
+        roleId = parseInt(roleId);
+        whId = parseInt(whId);
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (roleId === 1) {
                 sql = `
                     SELECT 
                     SUM(IF(month = 'Jan', revenue, 0)) AS 'January',
@@ -32,7 +37,7 @@ module.exports = {
                             WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ?
                             GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub;
                 `;
-                queryParameter = [5, parseInt(filter_year)];
+                queryParameter = [5, filterYear];
             } else {
                 sql = `
                     SELECT 
@@ -55,7 +60,7 @@ module.exports = {
                             WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ? AND warehouse_id = ?
                             GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub;
                 `;
-                queryParameter = [5, parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [5, filterYear, whId];
             };
 
             const [revenueResult] = await conn.query(sql, queryParameter);
@@ -363,13 +368,15 @@ module.exports = {
     getTopProdQty: async (req, res) => {
         console.log("Jalan /sales/top-prod-qty");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
+
+        // ? Pake metode 3 = req.headers ganti req.query, parseInt pada try catch karena sempat error di server pwdk pake req.headers, skrg pake req.query utk coba fix
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT od.product_id, p.name, SUM(od.qty) AS qty_sold FROM order_detail AS od
                     JOIN orders o
@@ -381,7 +388,7 @@ module.exports = {
                     ORDER BY qty_sold DESC
                     LIMIT 5;
                 `;
-                queryParameter = [5, parseInt(filter_year)];
+                queryParameter = [5, parseInt(filterYear)];
             } else {
                 sql = `
                     SELECT od.product_id, p.name, SUM(od.qty) AS qty_sold FROM order_detail AS od
@@ -394,7 +401,7 @@ module.exports = {
                     ORDER BY qty_sold DESC
                     LIMIT 5;
                 `;
-                queryParameter = [5, parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [5, parseInt(filterYear), parseInt(whId)];
             };
 
             const [topProdResult] = await conn.query(sql, queryParameter);
@@ -408,7 +415,7 @@ module.exports = {
         }
     },
     getTopProdVal: async (req, res) => {
-        console.log("Jalan /sales/top-prod-qty");
+        console.log("Jalan /sales/top-prod-val");
         const conn = await connection.promise().getConnection();
         const {filter_year, role_id, warehouse_id} = req.headers;
 
@@ -557,20 +564,24 @@ module.exports = {
     getTopUsers: async (req, res) => {
         console.log("Jalan /sales/top-users");
         const conn = await connection.promise().getConnection();
-        let {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
-        filter_year = Number(filter_year);
-        role_id = Number(role_id);
-        warehouse_id = Number(warehouse_id);
+        filterYear = Number(filterYear);
+        roleId = Number(roleId);
+        whId = Number(whId);
 
-        console.log("headers: ", req.headers);
-        console.log("filter_year: ", filter_year);
+        // ? Sengaja taro console.log, karena sempat error di server pwdk pake req.headers, skrg pake req.query utk coba fix
+        // ? Pake metode 1 = semua req.query, dirubah Number sblm masuk try catch
+        console.log("query: ", req.query);
+        console.log("filterYear: ", filterYear);
+        console.log("roleId: ", roleId);
+        console.log("whId: ", whId);
 
         try {
             let sql;
             let queryParameter;
 
-            if (role_id === 1) {
+            if (roleId === 1) {
                 sql = `
                     SELECT u.id AS user_id, u.username, SUM(od.price) AS total_transaction_value FROM user AS u
                     JOIN orders o
@@ -582,7 +593,7 @@ module.exports = {
                     ORDER BY total_transaction_value DESC
                     LIMIT 5;
                 `;
-                queryParameter = [5, filter_year];
+                queryParameter = [5, filterYear];
             } else {
                 sql = `
                     SELECT u.id AS user_id, u.username, SUM(od.price) AS total_transaction_value FROM user AS u
@@ -595,7 +606,7 @@ module.exports = {
                     ORDER BY total_transaction_value DESC
                     LIMIT 5;
                 `;
-                queryParameter = [5, filter_year, warehouse_id];
+                queryParameter = [5, filterYear, whId];
             };
             
             const [topProdResult] = await conn.query(sql, queryParameter);
