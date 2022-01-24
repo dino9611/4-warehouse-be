@@ -41,6 +41,11 @@ app.use(
       "x-token-email",
       "x-total-order",
     ], // To put token in headers
+    allowedHeaders: [
+      "filter_year",
+      "role_id",
+      "warehouse_id"
+    ]
   })
 );
 app.use(bearerToken());
