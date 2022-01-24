@@ -81,13 +81,13 @@ module.exports = {
     getPotentialRevenue: async (req, res) => {
         console.log("Jalan /sales/potential-revenue");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT 
                     SUM(IF(month = 'Jan', revenue, 0)) AS 'January',
@@ -109,7 +109,7 @@ module.exports = {
                             WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND YEAR(o.create_on) = ?
                             GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub;
                 `;
-                queryParameter = [parseInt(filter_year)];
+                queryParameter = [parseInt(filterYear)];
             } else {
                 sql = `
                     SELECT 
@@ -132,7 +132,7 @@ module.exports = {
                             WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND YEAR(o.create_on) = ? AND warehouse_id = ?
                             GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub;
                 `;
-                queryParameter = [parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [parseInt(filterYear), parseInt(whId)];
             };
 
             const [revenueResult] = await conn.query(sql, queryParameter);
@@ -153,13 +153,13 @@ module.exports = {
     getYearlyRevenue: async (req, res) => {
         console.log("Jalan /sales/yearly-revenue");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT IFNULL(SUM(revenue), 0) AS total_yearly
                     FROM (SELECT DATE_FORMAT(o.create_on, "%b") AS month, SUM(od.price) AS revenue
@@ -169,7 +169,7 @@ module.exports = {
                         WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ?
                         GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub;
                 `;
-                queryParameter = [5, parseInt(filter_year)];
+                queryParameter = [5, parseInt(filterYear)];
             } else {
                 sql = `
                     SELECT IFNULL(SUM(revenue), 0) AS total_yearly
@@ -180,7 +180,7 @@ module.exports = {
                         WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ? AND warehouse_id = ?
                         GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub;
                 `;
-                queryParameter = [5, parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [5, parseInt(filterYear), parseInt(whId)];
             };
 
             const [revenueResult] = await conn.query(sql, queryParameter);
@@ -196,13 +196,13 @@ module.exports = {
     getNetSales: async (req, res) => {
         console.log("Jalan /sales/net-sales");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT 
                     SUM(IF(month = 'Jan', net_sales, 0)) AS 'January',
@@ -226,7 +226,7 @@ module.exports = {
                             WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ?
                             GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub_table;
                 `;
-                queryParameter = [5, parseInt(filter_year)];
+                queryParameter = [5, parseInt(filterYear)];
             } else {
                 sql = `
                     SELECT 
@@ -251,7 +251,7 @@ module.exports = {
                             WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ? AND warehouse_id = ?
                             GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub_table;
                 `;
-                queryParameter = [5, parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [5, parseInt(filterYear), parseInt(whId)];
             };
             
             const [netSalesResult] = await conn.query(sql, queryParameter);
@@ -272,13 +272,13 @@ module.exports = {
     getYearNetSales: async (req, res) => {
         console.log("Jalan /sales/year-net-sales");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT IFNULL(SUM(net_sales), 0) AS total_yearly
                     FROM (SELECT DATE_FORMAT(o.create_on, "%b") AS month, IFNULL((SUM(od.qty) * p.price) - (SUM(od.qty) * p.product_cost), 0) AS net_sales
@@ -290,7 +290,7 @@ module.exports = {
                         WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ?
                         GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub_table;
                 `;
-                queryParameter = [5, parseInt(filter_year)];
+                queryParameter = [5, parseInt(filterYear)];
             } else {
                 sql = `
                     SELECT IFNULL(SUM(net_sales), 0) AS total_yearly
@@ -303,7 +303,7 @@ module.exports = {
                         WHERE o.create_on <= NOW() AND o.create_on >= DATE_ADD(NOW(), interval - 12 MONTH) AND status_id = ? AND YEAR(o.create_on) = ? AND warehouse_id = ?
                         GROUP BY DATE_FORMAT(o.create_on, "%m-%Y")) AS sub_table;
                 `;
-                queryParameter = [5, parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [5, parseInt(filterYear), parseInt(whId)];
             };
             
             const [yearNetResult] = await conn.query(sql, queryParameter);
@@ -319,13 +319,13 @@ module.exports = {
     getStatusContribution: async (req, res) => {
         console.log("Jalan /sales/status-contribution");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT 
                     so.status, 
@@ -338,7 +338,7 @@ module.exports = {
                         GROUP BY status 
                         ORDER BY so.id ASC;
                 `;
-                queryParameter = [parseInt(filter_year), parseInt(filter_year)];
+                queryParameter = [parseInt(filterYear), parseInt(filterYear)];
             } else {
                 sql = `
                     SELECT 
@@ -352,7 +352,7 @@ module.exports = {
                         GROUP BY status 
                         ORDER BY so.id ASC;
                 `;
-                queryParameter = [parseInt(filter_year), parseInt(warehouse_id), parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [parseInt(filterYear), parseInt(whId), parseInt(filterYear), parseInt(whId)];
             };
 
             const [statusResult] = await conn.query(sql, queryParameter);
@@ -417,13 +417,13 @@ module.exports = {
     getTopProdVal: async (req, res) => {
         console.log("Jalan /sales/top-prod-val");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT od.product_id, p.name, SUM(od.price) AS sales_value FROM order_detail AS od
                     JOIN orders o
@@ -435,7 +435,7 @@ module.exports = {
                     ORDER BY sales_value DESC
                     LIMIT 5;
                 `;
-                queryParameter = [5, parseInt(filter_year)];
+                queryParameter = [5, parseInt(filterYear)];
             } else {
                 sql = `
                     SELECT od.product_id, p.name, SUM(od.price) AS sales_value FROM order_detail AS od
@@ -448,7 +448,7 @@ module.exports = {
                     ORDER BY sales_value DESC
                     LIMIT 5;
                 `;
-                queryParameter = [5, parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [5, parseInt(filterYear), parseInt(whId)];
             };
 
             const [topProdResult] = await conn.query(sql, queryParameter);
@@ -464,13 +464,13 @@ module.exports = {
     getCategoryContribution: async (req, res) => {
         console.log("Jalan /sales/category-contribution");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT 
                     c.category, 
@@ -490,7 +490,7 @@ module.exports = {
                             GROUP BY c.category
                             ORDER BY amount DESC;
                 `
-                queryParameter = [5, parseInt(filter_year), 5, parseInt(filter_year)];
+                queryParameter = [5, parseInt(filterYear), 5, parseInt(filterYear)];
             } else {
                 sql = `
                     SELECT 
@@ -511,7 +511,7 @@ module.exports = {
                             GROUP BY c.category
                             ORDER BY amount DESC;
                 `
-                queryParameter = [5, parseInt(filter_year), 5, parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [5, parseInt(filterYear), 5, parseInt(filterYear), parseInt(whId)];
             };
 
             const [categoryResult] = await conn.query(sql, queryParameter);
@@ -527,20 +527,20 @@ module.exports = {
     getTotalProdSold: async (req, res) => {
         console.log("Jalan /sales/prod-sold");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT IFNULL(SUM(qty), 0) AS total_qty_sold FROM order_detail AS od
                     JOIN orders o
                     ON od.orders_id = o.id
                     WHERE status_id = ? AND YEAR(o.create_on) = ?;
                 `;
-                queryParameter = [5, parseInt(filter_year)];
+                queryParameter = [5, parseInt(filterYear)];
             } else {
                 sql = `
                     SELECT IFNULL(SUM(qty), 0) AS total_qty_sold FROM order_detail AS od
@@ -548,7 +548,7 @@ module.exports = {
                     ON od.orders_id = o.id
                     WHERE status_id = ? AND YEAR(o.create_on) = ? AND warehouse_id = ?;
                 `;
-                queryParameter = [5, parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [5, parseInt(filterYear), parseInt(whId)];
             };
 
             const [usersResult] = await conn.query(sql, queryParameter);
@@ -641,13 +641,13 @@ module.exports = {
     getAverageTransaction: async (req, res) => {
         console.log("Jalan /sales/average-transaction");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT IFNULL(ROUND(AVG(total_price), 0), 0) AS avg_transaction 
                         FROM (SELECT SUM(od.price) AS total_price 
@@ -657,7 +657,7 @@ module.exports = {
                             WHERE o.status_id = ? AND YEAR(o.create_on) = ?
                             GROUP BY od.orders_id) AS shadow_table;
                 `;
-                queryParameter = [5, parseInt(filter_year)];
+                queryParameter = [5, parseInt(filterYear)];
             } else {
                 sql = `
                     SELECT IFNULL(ROUND(AVG(total_price), 0), 0) AS avg_transaction 
@@ -668,7 +668,7 @@ module.exports = {
                             WHERE o.status_id = ? AND YEAR(o.create_on) = ? AND o.warehouse_id = ?
                             GROUP BY od.orders_id) AS shadow_table;
                 `;
-                queryParameter = [5, parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [5, parseInt(filterYear), parseInt(whId)];
             };
             
             const [avgTransactionResult] = await conn.query(sql, queryParameter);
@@ -684,24 +684,24 @@ module.exports = {
     getTotalOrders: async (req, res) => {
         console.log("Jalan /sales/total-orders");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filterYear, roleId, whId} = req.query;
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (parseInt(roleId) === 1) {
                 sql = `
                     SELECT COUNT(id) AS total_orders FROM orders AS o
                     WHERE YEAR(o.create_on) = ?;
                 `;
-                queryParameter = parseInt(filter_year);
+                queryParameter = parseInt(filterYear);
             } else {
                 sql = `
                     SELECT COUNT(id) AS total_orders FROM orders AS o
                     WHERE YEAR(o.create_on) = ? AND o.warehouse_id = ?;
                 `;
-                queryParameter = [parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [parseInt(filterYear), parseInt(whId)];
             };
 
             const [ordersResult] = await conn.query(sql, queryParameter);
