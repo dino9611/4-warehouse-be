@@ -562,7 +562,6 @@ module.exports = {
         filter_year = parseInt(filter_year);
         role_id = parseInt(role_id);
         warehouse_id = parseInt(warehouse_id);
-        
 
         try {
             let sql;
