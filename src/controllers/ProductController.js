@@ -305,13 +305,14 @@ module.exports = {
       where is_delete = 0 ${filterSql}
       ${sortSql}
       limit ?,?`;
-
       let [dataProduct] = await connDb.query(sql, [
         parseInt(offset),
         parseInt(limit),
       ]);
 
-      sql = `select count(id) as total from product where true ${filterSql} ${sortSql}`;
+      const isDelete = ` and is_delete = 0`;
+
+      sql = `select count(id) as total from product where true ${isDelete} ${filterSql} ${sortSql}`;
       let [totalProduct] = await connDb.query(sql);
 
       res.set("x-total-count", totalProduct[0].total);
