@@ -40,12 +40,10 @@ app.use(
       "x-total-count",
       "x-token-email",
       "x-total-order",
-    ], // To put token in headers
-    allowedHeaders: [
       "filter_year",
       "role_id",
       "warehouse_id"
-    ]
+    ], // To put token in headers
   })
 );
 app.use(bearerToken());
