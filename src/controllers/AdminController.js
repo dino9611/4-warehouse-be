@@ -54,7 +54,8 @@ module.exports = {
               ON u.id = wa.user_id
               JOIN warehouse w
               ON wa.warehouse_id = w.id
-              WHERE u.role_id = ?;
+              WHERE u.role_id = ?
+              ORDER BY wa.warehouse_id;
           `;
 
         const [adminListResult] = await conn.query(sql, 2);
@@ -170,4 +171,28 @@ module.exports = {
       return res.status(500).send({ message: error.message || "Server error" });
     };
   },
+  getStockBreakdown: async (req, res) => {
+    console.log("Jalan /admin/stock-breakdown/:prodId");
+    const conn = await connection.promise().getConnection();
+    const prodId = parseInt(req.params.prodId); // Dari frontend
+
+    try {
+      let sql = `
+          SELECT s.warehouse_id, w.name, SUM(s.stock) AS total_stock FROM stock AS s
+          JOIN warehouse w
+          ON s.warehouse_id = w.id
+          WHERE s.ready_to_sent = 0 AND s.product_id = ?
+          GROUP BY s.warehouse_id
+          ORDER BY s.warehouse_id;
+        `;
+      const [stockResult] = await conn.query(sql, prodId);
+
+      conn.release();
+      return res.status(200).send(stockResult);
+    } catch (error) {
+      conn.release();
+      console.log(error);
+      return res.status(500).send({ message: error.message || "Server error" });
+    };
+  }
 };

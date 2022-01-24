@@ -31,7 +31,7 @@ module.exports = {
       let sql = `select a.id, recipient, phone_number ,address, latitude, longitude, province, province_id, city, city_id, is_main_address from address a
       join region r
       on r.address_id = a.id
-      where user_id = ?
+      where user_id = ? and is_delete = 0
       order by is_main_address desc`;
       let [dataAddress] = await connDb.query(sql, req.params.userId);
 
@@ -148,7 +148,6 @@ module.exports = {
 
       return res.status(200).send(cityOptions);
     } catch (error) {
-      console.log(error);
       return res.status(500).send({ message: error.message });
     }
   },
@@ -281,6 +280,57 @@ module.exports = {
     } catch (error) {
       connDb.release();
 
+      return res.status(500).send({ message: error.message });
+    }
+  },
+
+  editAddress: async (req, res) => {
+    const connDb = await connection.promise().getConnection();
+    const {
+      user_id,
+      recipient,
+      phone_number,
+      address,
+      latitude,
+      longitude,
+      is_main_address,
+      province,
+      province_id,
+      city,
+      city_id,
+    } = req.body;
+
+    try {
+      let sql;
+
+      let dataAddress = {
+        user_id,
+        recipient,
+        phone_number,
+        address,
+        latitude,
+        longitude,
+      };
+
+      sql = `update address set ? where id = ?`;
+      await connDb.query(sql, [dataAddress, req.params.addressId]);
+
+      const dataRegion = {
+        address_id: req.params.addressId,
+        province,
+        province_id,
+        city,
+        city_id,
+      };
+      sql = `update region set ? where address_id = ?`;
+      await connDb.query(sql, [dataRegion, req.params.addressId]);
+
+      connDb.release();
+
+      return res.status(200).send({ message: "Berhasil update alamat" });
+    } catch (error) {
+      console.log(error);
+      connDb.release();
       return res.status(500).send({ message: error.message });
     }
   },

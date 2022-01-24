@@ -140,7 +140,7 @@ module.exports = {
   },
 
   checkingRequest: async (req, res) => {
-    const connDb = await connection.promise().getConnection();
+    const connDb = await connection.promise();
     const { ordersId, productId } = req.query;
 
     try {

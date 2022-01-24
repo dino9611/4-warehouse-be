@@ -41,6 +41,14 @@ app.use(
       "x-token-email",
       "x-total-order",
     ], // To put token in headers
+    // allowedHeaders: [
+    //   'Content-Type', 
+    //   'Authorization',
+    //   "filter_year",
+    //   "role_id",
+    //   "warehouse_id",
+    // ]
+    // ? Testing debug admin req.headers entah kenapa ga mau kebaca headers nya di backend server purwadhika
   })
 );
 app.use(bearerToken());

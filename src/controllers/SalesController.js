@@ -557,13 +557,20 @@ module.exports = {
     getTopUsers: async (req, res) => {
         console.log("Jalan /sales/top-users");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filter_year, role_id, warehouse_id} = req.headers;
+
+        filter_year = Number(filter_year);
+        role_id = Number(role_id);
+        warehouse_id = Number(warehouse_id);
+
+        console.log("headers: ", req.headers);
+        console.log("filter_year: ", filter_year);
 
         try {
             let sql;
             let queryParameter;
 
-            if (parseInt(role_id) === 1) {
+            if (role_id === 1) {
                 sql = `
                     SELECT u.id AS user_id, u.username, SUM(od.price) AS total_transaction_value FROM user AS u
                     JOIN orders o
@@ -575,7 +582,7 @@ module.exports = {
                     ORDER BY total_transaction_value DESC
                     LIMIT 5;
                 `;
-                queryParameter = [5, parseInt(filter_year)];
+                queryParameter = [5, filter_year];
             } else {
                 sql = `
                     SELECT u.id AS user_id, u.username, SUM(od.price) AS total_transaction_value FROM user AS u
@@ -588,7 +595,7 @@ module.exports = {
                     ORDER BY total_transaction_value DESC
                     LIMIT 5;
                 `;
-                queryParameter = [5, parseInt(filter_year), parseInt(warehouse_id)];
+                queryParameter = [5, filter_year, warehouse_id];
             };
             
             const [topProdResult] = await conn.query(sql, queryParameter);

@@ -202,7 +202,7 @@ module.exports = {
           WHERE u.id = ?;
         `;
       } else {
-        sql = `select id,username,email,is_verified,role_id from user where id = ?`;
+        sql = `select id,username,email,is_verified,role_id, profile_picture from user where id = ?`;
       }
       const [userData] = await conn.query(sql, [id]);
       if (!userData.length) {

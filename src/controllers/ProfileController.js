@@ -58,6 +58,8 @@ module.exports = {
       sql = `update user set ? where id = ? and role_id = 3`;
       let [dataUser] = await connDb.query(sql, [dataInput, req.params.userId]);
 
+      connDb.release();
+
       return res.status(200).send({ message: imagePath });
     } catch (error) {
       console.log(error);
@@ -70,7 +72,7 @@ module.exports = {
     const connDb = await connection.promise().getConnection();
 
     try {
-      if (!req.body.currentPass && !req.body.newPass) {
+      if (!req.body.currentPass || !req.body.newPass) {
         throw { message: "Password harus diisi!" };
       }
 
@@ -78,7 +80,7 @@ module.exports = {
       let [cekPass] = await connDb.query(sql, [hashPass(req.body.currentPass)]);
 
       if (!cekPass.length) {
-        return res.status(200).send(cekPass);
+        throw { message: "Password lama salah" };
       }
 
       sql = `update user set password = ? where id = ? and role_id = 3`;
@@ -89,7 +91,6 @@ module.exports = {
       return res.status(200).send(cekPass);
     } catch (error) {
       connDb.release();
-      console.log(error);
       return res.status(500).send({ message: error.message });
     }
   },
@@ -134,9 +135,12 @@ module.exports = {
         html: htmlToEmail,
       });
 
+      connDb.release();
+
       return res.status(200).send(cekPass);
     } catch (error) {
       console.log(error);
+      connDb.release();
       return res.status(500).send({ message: error.message });
     }
   },
