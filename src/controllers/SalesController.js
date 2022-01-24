@@ -557,7 +557,12 @@ module.exports = {
     getTopUsers: async (req, res) => {
         console.log("Jalan /sales/top-users");
         const conn = await connection.promise().getConnection();
-        const {filter_year, role_id, warehouse_id} = req.headers;
+        let {filter_year, role_id, warehouse_id} = req.headers;
+
+        filter_year = parseInt(filter_year);
+        role_id = parseInt(role_id);
+        warehouse_id = parseInt(warehouse_id);
+        
 
         try {
             let sql;
