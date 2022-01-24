@@ -559,9 +559,9 @@ module.exports = {
         const conn = await connection.promise().getConnection();
         let {filter_year, role_id, warehouse_id} = req.headers;
 
-        filter_year = parseInt(filter_year);
-        role_id = parseInt(role_id);
-        warehouse_id = parseInt(warehouse_id);
+        filter_year = Number(filter_year);
+        role_id = Number(role_id);
+        warehouse_id = Number(warehouse_id);
 
         try {
             let sql;
