@@ -19,7 +19,7 @@ module.exports = {
             ON s.product_id = p.id
             WHERE is_delete = ?
             GROUP BY p.id
-            ORDER BY p.id
+            ORDER BY p.create_on DESC
             LIMIT ? OFFSET ?;
         `;
       const [productsResult] = await conn.query(sql, [
