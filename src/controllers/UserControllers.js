@@ -2,6 +2,7 @@ const { connection } = require("../connection");
 require("dotenv").config();
 const rajaOngkir = require("rajaongkir-nodejs").Starter(
   `${process.env.RAJA_USER_KEVIN}`
+  // "d167888ba27e21b1202734bfc9071219"
 );
 
 module.exports = {
